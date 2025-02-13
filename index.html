@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My GeoJSON App</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+  <h1>Sveriges landskap</h1>
+  
+  <!-- Sökformulär för koordinater -->
+  <div id="search">
+    <input id="latitude" type="text" placeholder="Latitud (t.ex. 62.0)" />
+    <input id="longitude" type="text" placeholder="Longitud (t.ex. 15.0)" />
+    <button id="searchButton">Sök</button>
+  </div>
+  
+  <!-- Sökformulär för platser -->
+  <div id="place-search">
+    <input id="placeName" type="text" placeholder="Sök plats (t.ex. Stockholm)" />
+    <button id="searchPlaceButton">Sök plats</button>
+  </div>
+
+<!-- Behållare för sökresultat -->
+<div id="results"></div>
+
+  
+  <div id="map" style="height: 500px;"></div>
+  
+  <!-- Inkludera Turf.js om du använder den -->
+  <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
