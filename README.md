@@ -1,24 +1,29 @@
-# Sveriges Landskap – Interaktiv karta
-
-Detta är ett övningsprojekt för att skapa en interaktiv karta över Sveriges landskap.  
+## Sveriges Landskap – Interaktiv karta & Geodata-extrahering
+Detta är ett övningsprojekt för att skapa en interaktiv karta över Sveriges län, kommuner och landskap, samt en funktion för att analysera koordinater från en uppladdad Excel-fil.
 Projektet är byggt med hjälp av ChatGPT och använder HTML, CSS, JavaScript och Leaflet.js.
 
-## Funktioner
-- Interaktiv karta med Sveriges landskap
-- Sök efter platser och få information om landskap, län och kommun
-- Klicka på kartan för att hämta geografisk information
-- Byggt med Leaflet.js och GeoJSON
+##Funktioner
+✅ Interaktiv karta – Sveriges landskap, län och kommuner visas på en karta med möjligheten att tända/släcka lager.
+✅ Sökfunktioner – Sök efter en plats eller mata in koordinater och få information om dess landskap, län och kommun.
+✅ Klicka på kartan – Få detaljerad information om vald plats direkt i en popup.
+✅ Ladda upp Excel-fil med koordinater – Lägg till län, kommun och landskap till dina koordinater och ladda ner en uppdaterad fil.
+✅ Data från GeoJSON – Polygoninformationen hämtas från GeoJSON-filer för högre precision.
 
-## Tekniker
-- HTML, CSS, JavaScript
-- Leaflet.js för kartan
-- GeoJSON för geografiska data
-- GitHub Pages för hosting
+##Tekniker
+HTML, CSS, JavaScript – För gränssnitt och interaktivitet.
+Leaflet.js – För kartvisning och hantering av lager.
+GeoJSON – Används för att visa geografiska data som landskap, län och kommuner.
+Turf.js – För att analysera om en punkt ligger inom en polygon (punkt-i-polygon).
+SheetJS (xlsx) – För att läsa och skriva Excel-filer.
+Nominatim (OpenStreetMap) – Används för omvänd geokodning av adresser och platser.
+GitHub Pages – För att hosta webbapplikationen.
 
-## Installation
-För att köra projektet lokalt:
-1. Klona projektet:
-   ```sh
-   git clone https://github.com/alotsa/Sveriges-landskap.git
+##Installation (Köra lokalt)
+Om du vill köra projektet lokalt:
 
-## Denna README är skriven av ChatGPT
+##Live Demo
+🔗 Se den live på GitHub Pages:
+👉 Sveriges Landskap – Interaktiv karta
+
+📌 Denna README är skapad med hjälp av ChatGPT.
+🚀 Projektet är ett övningsprojekt och är under utveckling.
