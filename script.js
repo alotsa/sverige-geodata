@@ -30,7 +30,6 @@ window.addEventListener('load', () => {
 /****************************************************
  * 2. EXCEL-BEARBETNING (SheetJS)
  ****************************************************/
-// Läs och bearbeta Excel-filen
 function readAndProcessExcel(file) {
   const reader = new FileReader();
   reader.onload = function(e) {
@@ -47,7 +46,6 @@ function readAndProcessExcel(file) {
   reader.readAsArrayBuffer(file);
 }
 
-// Klick på knappen "Hämta geodata"
 document.getElementById('processBtn').addEventListener('click', () => {
   const fileInput = document.getElementById('excelFile');
   if (!fileInput.files || fileInput.files.length === 0) {
@@ -57,7 +55,7 @@ document.getElementById('processBtn').addEventListener('click', () => {
   readAndProcessExcel(fileInput.files[0]);
 });
 
-// Visar valt filnamn i <p id="selectedFileName">
+// Visar valt filnamn
 document.getElementById('excelFile').addEventListener('change', function(e) {
   const fileNameDisplay = document.getElementById('selectedFileName');
   fileNameDisplay.textContent = (e.target.files.length > 0)
@@ -76,37 +74,30 @@ function processRows(rows) {
     const lat = parseFloat(row.lat);
     const lon = parseFloat(row.lon);
 
-    let manuellKontroll = ""; // 🔹 UPPDATERAD KOD: Ny kolumn för att flagga problem
+    let manuellKontroll = "";
 
-    // 🔹 UPPDATERAD KOD: Kolla om koordinaterna är inom Sveriges ungefärliga gränser
+    // Kolla om koordinaterna är inom Sveriges ungefärliga gränser
     if (isNaN(lat) || isNaN(lon) || lat < 55 || lat > 70 || lon < 10 || lon > 25) {
       console.warn("⚠️ Ogiltiga koordinater i rad:", row);
       row.lan = "";
       row.kommun = "";
       row.landskap = "";
-      manuellKontroll = "Kontrollera koordinater (punkt utanför Sverige)"; // 🔹 Markera att det behövs manuell kontroll
+      manuellKontroll = "Kontrollera koordinater (punkt utanför Sverige)";
     } else {
-      // Sök län, kommun och landskap via polygonLookup
+      // Punkt-i-polygon
       const foundLan = polygonLookup(lon, lat, geojsonLan, "lan");
       const foundKommun = polygonLookup(lon, lat, geojsonKommun, "kommun");
       const foundLandskap = polygonLookup(lon, lat, geojsonLandskap, "Landskap-lappmark");
-
-      console.log(`🗺️ Koordinater: ${lat}, ${lon}`);
-      console.log(`   ➡️ Län: ${foundLan}`);
-      console.log(`   ➡️ Kommun: ${foundKommun}`);
-      console.log(`   ➡️ Landskap: ${foundLandskap}`);
 
       row.lan = foundLan || "";
       row.kommun = foundKommun || "";
       row.landskap = foundLandskap || "";
 
-      // 🔹 UPPDATERAD KOD: Om ingen träff på polygoner, markera för manuell kontroll
       if (!foundLan || !foundKommun || !foundLandskap) {
         manuellKontroll = "Ingen träff i polygondata";
       }
     }
 
-    // 🔹 UPPDATERAD KOD: Lägg till den nya kolumnen i varje rad
     row.manuell_kontroll = manuellKontroll;
   }
 
@@ -125,17 +116,12 @@ function polygonLookup(lon, lat, geojson, propertyName) {
   }
 
   const pt = turf.point([lon, lat]);
-  console.log(`🔍 Söker efter ${propertyName} för koordinater: ${lon}, ${lat}`);
-
   for (let feature of geojson.features) {
     if (!feature.geometry) continue;
     if (turf.booleanPointInPolygon(pt, feature)) {
-      console.log(`✅ Träff i ${propertyName}:`, feature.properties[propertyName]);
       return feature.properties[propertyName];
     }
   }
-
-  console.log(`❌ Ingen träff i ${propertyName} för koordinater: ${lon}, ${lat}`);
   return null;
 }
 
@@ -147,7 +133,6 @@ function generateAndDownloadExcel(rows) {
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(rows);
 
-  // 🔹 UPPDATERAD KOD: Se till att vi har kolumnrubriker med den nya kolumnen
   const headers = Object.keys(rows[0] || {});
   const wsHeaders = XLSX.utils.aoa_to_sheet([headers]);
   XLSX.utils.sheet_add_json(wsHeaders, rows, { origin: "A2", skipHeader: true });
@@ -170,20 +155,16 @@ function generateAndDownloadExcel(rows) {
 }
 
 
-
 /****************************************************
  * 6. LEAFLET-KARTA MED OLIKA LAGER
  ****************************************************/
-// Samlar Leaflet-lager (Kommun, Län, Landskap)
 let overlayMaps = {};
 
-// Skapa Leaflet-kartan
 const map = L.map('map', {
-  center: [59.3689, 18.0538],
+  center: [59.3690, 18.0540],
   zoom: 16
 });
 
-// Lägg till OpenStreetMap-lager
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors',
   tileSize: 256,
@@ -191,14 +172,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   noWrap: true
 }).addTo(map);
 
-// Försök motverka renderingfel genom att tvinga en uppdatering
 setTimeout(() => {
   map.invalidateSize();
 }, 500);
 
-/**
- * addGeoJsonLayer(url, layerName) - Hämtar GeoJSON & lägger till som lager i kartan
- */
 function addGeoJsonLayer(url, layerName) {
   fetch(url)
     .then(response => response.json())
@@ -222,15 +199,13 @@ function addGeoJsonLayer(url, layerName) {
       overlayMaps[layerName] = layer;
       map.addLayer(layer);
 
-      // Skapa lagerkontroll när alla 3 lager är klara
       if (Object.keys(overlayMaps).length === 3) {
-        L.control.layers(null, overlayMaps, { collapsed: false }).addTo(map);
+        L.control.layers(null, overlayMaps, { collapsed: false, position: 'bottomright' }).addTo(map);
       }
     })
     .catch(err => console.error(`Error loading ${layerName}:`, err));
 }
 
-// Ladda lager
 addGeoJsonLayer('data/kommun.geojson', "Kommun");
 addGeoJsonLayer('data/lan.geojson', "Län");
 addGeoJsonLayer('data/landskap-lappmark.geojson', "Landskap");
@@ -246,10 +221,13 @@ async function showAllInfo(lat, lng) {
     const response = await fetch(nominatimUrl);
     const data = await response.json();
 
-    const displayName = data.display_name || "Okänd plats";
-    const county = data.address?.county || "Okänt län";
-    const municipality = data.address?.municipality || data.address?.town || "Okänd kommun";
+    // Hantera fullständig adress och vänd ordningen
+    let fullAddress = data.display_name || "Okänd plats";
+    let addressParts = fullAddress.split(", ");
+    addressParts.reverse(); // Vänd ordningen så att större områden kommer först
+    const formattedAddress = addressParts.join(", ");
 
+    // Polygonträffar
     let infoList = [];
     Object.entries(overlayMaps).forEach(([layerName, layer]) => {
       if (!map.hasLayer(layer)) return;
@@ -278,11 +256,10 @@ async function showAllInfo(lat, lng) {
       : infoList.join("") + "<br><strong>Källa:</strong> Lantmäteriet (aktiva polygonlager)";
 
     const popupHtml = `
-      <strong>Adress:</strong> ${displayName}<br>
       <strong>Koordinater (WGS84):</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>
-      <strong>Län:</strong> ${county}<br>
-      <strong>Kommun:</strong> ${municipality}<br>
-      <br><strong>Källa:</strong> Nominatim/OpenStreetMap (bakgrundskarta)
+      <strong>Adress:</strong> ${formattedAddress}
+      <br>
+      <br><strong>Källa:</strong> Nominatim/OpenStreetMap
       <hr>
       ${polygonText}
     `;
@@ -297,14 +274,17 @@ async function showAllInfo(lat, lng) {
   }
 }
 
-// Global klick på kartan => popup
+/****************************************************
+ * 8. KARTKLICK OCH SÖKFUNKTIONER
+ ****************************************************/
+// Klick i kartan -> popup med info
 map.on('click', function(e) {
   const lat = e.latlng.lat;
   const lng = e.latlng.lng;
   showAllInfo(lat, lng);
 });
 
-// Koordinatsökning
+// Koordinatsök
 document.getElementById('searchButton').addEventListener('click', function() {
   const lat = parseFloat(document.getElementById('latitude').value);
   const lng = parseFloat(document.getElementById('longitude').value);
@@ -317,42 +297,96 @@ document.getElementById('searchButton').addEventListener('click', function() {
   showAllInfo(lat, lng);
 });
 
-// Platssökning
+// Platssök (Sverige, limit=10, prioriterar by/stad)
 document.getElementById('searchPlaceButton').addEventListener('click', function() {
+  searchPlace();
+});
+
+// ENTER i platsfältet
+document.getElementById('placeName').addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    searchPlace();
+  }
+});
+
+// Klick på Sök-knappen
+document.getElementById('searchPlaceButton').addEventListener('click', function() {
+  searchPlace();
+});
+
+// Nya searchPlace som visar upp till 10 träffar i en lista
+function searchPlace() {
   const query = document.getElementById('placeName').value.trim();
+  const resultsContainer = document.getElementById('results');
+
+  resultsContainer.innerHTML = "";
+
   if (query === "") {
     alert("Ange ett platsnamn att söka efter.");
     return;
   }
 
-  const resultsContainer = document.getElementById('results');
-  resultsContainer.innerHTML = "";
-
-  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+  // Hämtar upp till 10 resultat
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=SE&limit=10&addressdetails=1`)
     .then(response => response.json())
     .then(data => {
-      if (data && data.length > 0) {
-        const ul = document.createElement('ul');
-        data.forEach(result => {
-          const li = document.createElement('li');
-          li.textContent = result.display_name;
-          li.style.cursor = "pointer";
-          li.addEventListener('click', function() {
-            resultsContainer.innerHTML = "";
-            const lat = parseFloat(result.lat);
-            const lon = parseFloat(result.lon);
-            map.setView([lat, lon], 10);
-            showAllInfo(lat, lon);
-          });
-          ul.appendChild(li);
-        });
-        resultsContainer.appendChild(ul);
-      } else {
-        alert("Inga resultat hittades för: " + query);
+      if (!data || data.length === 0) {
+        resultsContainer.innerHTML = "<div class='no-results'>Inga resultat hittades.</div>";
+        return;
       }
+
+      // Skapa en lista av träffar
+      const ul = document.createElement('ul');
+      ul.classList.add("search-results-list");
+
+      data.forEach(result => {
+        const li = document.createElement('li');
+        // Exempel: ta bort \", Sverige\" i slutet
+        const displayName = result.display_name.replace(/, Sverige$/, "");
+        li.textContent = displayName;
+        li.addEventListener('click', () => {
+          document.getElementById('placeName').value = displayName;
+          resultsContainer.innerHTML = "";
+
+          const lat = parseFloat(result.lat);
+          const lon = parseFloat(result.lon);
+          map.setView([lat, lon], 10);
+          showAllInfo(lat, lon);
+        });
+        ul.appendChild(li);
+      });
+
+      resultsContainer.appendChild(ul);
+
+      // **Beräkna var #results ska ligga i förhållande till #placeName**
+      const placeNameInput = document.getElementById('placeName');
+      const rect = placeNameInput.getBoundingClientRect();
+
+      // Låt #results matcha input-bredden
+      resultsContainer.style.width = rect.width + "px";
+
+      // Placera listan precis under input (samma left)
+      // Eftersom #place-search har position: relative
+      const topPos = placeNameInput.offsetTop + placeNameInput.offsetHeight; 
+      const leftPos = placeNameInput.offsetLeft; 
+      
+      resultsContainer.style.top = topPos + "px";
+      resultsContainer.style.left = leftPos + "px";
     })
     .catch(error => {
       console.error("Fel vid plats-sökning:", error);
       alert("Ett fel uppstod vid sökningen.");
     });
+}
+
+// Dölj sökresultaten om användaren klickar utanför listan
+document.addEventListener('click', function(event) {
+  const resultsContainer = document.getElementById('results');
+  const placeInput = document.getElementById('placeName');
+
+  // Om klicket INTE är inom plats-input eller resultatlistan -> rensa listan
+  if (!resultsContainer.contains(event.target) && !placeInput.contains(event.target)) {
+    resultsContainer.innerHTML = "";
+  }
 });

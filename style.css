@@ -24,6 +24,19 @@ html, body {
   image-rendering: pixelated; /* Förhindrar att tiles blir oskarpa */
 }
 
+.leaflet-popup-content {
+  max-width: 300px !important; /* Anpassa bredden */
+  font-size: 0.9rem; /* Mindre textstorlek på mobil */
+  overflow-wrap: break-word; /* Se till att långa ord bryts */
+}
+
+@media (max-width: 768px) {
+  .leaflet-popup-content {
+    max-width: 180px !important; /* Gör popup mindre på mobil */
+    font-size: 0.8rem; /* Ännu mindre text för bättre fit */
+  }
+}
+
 /* ======= RUBRIKER ======= */
 h1 {
   font-family: 'Jersey 10', sans-serif;
@@ -244,4 +257,43 @@ footer {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+#place-search {
+  position: relative; 
+  /* Gör att vi kan placera #results absolut inuti denna container */
+}
+
+/* Vår result-lista */
+#results {
+  position: absolute;
+  max-height: 200px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  /* default: width: auto; men vi sätter en i JavaScript */
+}
+
+#results ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#results li {
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+#results li:hover {
+  background-color: #f0f0f0;
+}
+
+.no-results {
+  padding: 10px;
+  color: #888;
 }
