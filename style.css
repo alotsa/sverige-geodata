@@ -9,16 +9,160 @@ html, body {
   max-height: 90vh; /* Hindra kartan från att bli för stor */
 }
 
+/* Huvudrubrik med Jersey 10 */
 h1 {
-  font-family: "Calibri", sans-serif; /* Ändra till önskad font */
-  font-size: 36px; /* Justera storleken om du vill */
-  font-weight: bold; /* Kan vara normal, bold, etc. */
-  text-align: left; /* Centrera texten */
-  color: #333; /* Ändra färg om du vill */
+  font-family: 'Jersey 10', sans-serif;
+  font-size: 4em;
+  text-transform: uppercase;
+  text-align: left;
+  color: #051d35;
+  margin-bottom: 5px;
+  margin-top: 2px;
+}
+/* Underrubrik med en snygg modern font */
+.subtitle {
+  font-family: 'Quicksand', sans-serif; /* Eller en annan om du vill */
+  font-size: 1.5em;
+  text-align: left;
+  color: #051d35;
+  font-weight: 500;
+  margin-top: 0;
+}
+
+/* H2 med Quicksand */
+h2 {
+  font-family: 'Quicksand', sans-serif; /* Eller en annan om du vill */
+  font-size: 1.5em;
+  text-align: left;
+  color: #051d35;
+  font-weight: 500;
+  margin-bottom: 2px;
+  margin-top: 2px;
+}
+
+/* H3 med Quicksand */
+h3 {
+  font-family: 'Quicksand', sans-serif; /* Eller en annan om du vill */
+  font-size: 1em;
+  text-align: left;
+  text-align: left;
+  color: #051d35;
+  font-weight: 500;
+  margin-bottom: 2px;
+  margin-top: 2px;
+}
+
+.data-title {
+  font-family: 'Quicksand', sans-serif; /* Quicksand-fonten */
+  font-size: 1em; /* Justera storleken om du vill */
+  font-weight: 500;
+  color: #051d35; /* Mörkare färg för bättre läsbarhet */
+  cursor: pointer; /* Indikerar att det går att klicka */
+  margin-bottom: 5px;
 }
 
 body {
   font-family: Calibri, sans-serif;
 }
+/* Footer för GitHub-ikonen */
+footer {
+  text-align: center;
+  margin-top: 20px;
+  padding: 10px;
+}
 
+/* GitHub-ikonen */
+.github-icon {
+  width: 40px; /* Storlek på ikonen */
+  height: 40px;
+  fill: #051d35; /* Standardfärg */
+  transition: transform 0.2s ease-in-out, fill 0.2s ease-in-out;
+}
+
+/* Länk till GitHub */
+.github-link {
+  display: inline-block;
+  text-decoration: none;
+}
+
+/* Effekter vid hover */
+.github-link:hover .github-icon {
+  fill: #1a73e8; /* Blå färg vid hover */
+  transform: scale(1.2); /* Gör ikonen lite större */
+}
+
+button {
+  background-color: #051d35; /* Blå färg – byt vid behov */
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px; /* Rundade hörn */
+  cursor: pointer;
+  transition: all 0.3s ease-in-out; /* Mjuk övergång */
+  box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.2); /* Skugga */
+  font-family: 'Quicksand', sans-serif; /* Quicksand-fonten */
+  font-size: 1em; /* Justera storleken om du vill */
+}
+
+button:hover {
+  background-color: #0052aa; /* Lite mörkare blå */
+  box-shadow: 2px 6px 10px rgba(0, 0, 0, 0.3); /* Starkare skugga */
+  transform: translateY(-2px); /* Lyfter knappen vid hover */
+}
+
+button:active {
+  background-color: #004699; /* Ännu mörkare vid klick */
+  transform: translateY(1px); /* Trycker ner vid klick */
+}
+
+/* Dölj standard-filuppladdning */
+input[type="file"] {
+  display: none;
+}
+
+/* Anpassad knapp för filuppladdning */
+.custom-file-upload {
+  background-color: #051d35; /* Blå färg – byt vid behov */
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px; /* Rundade hörn */
+  cursor: pointer;
+  transition: all 0.3s ease-in-out; /* Mjuk övergång */
+  box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.2); /* Skugga */
+  display: inline-block; /* Gör att knappen kan flyttas med transform */
+  font-size: 1rem;
+  font-family: 'Quicksand', sans-serif; /* Quicksand-fonten */
+  font-size: 1em; /* Justera storleken om du vill */
+}
+
+
+/* Hover-effekt */
+.custom-file-upload:hover {
+  background-color: #0052aa; /* Lite mörkare blå */
+  box-shadow: 2px 6px 10px rgba(0, 0, 0, 0.3); /* Starkare skugga */
+  transform: translateY(-2px); /* Lyfter knappen vid hover */
+}
+
+/* Aktiv effekt (vid klick) */
+.custom-file-upload:active {
+  background-color: #004699; /* Ännu mörkare vid klick */
+  transform: translateY(1px); /* Trycker ner vid klick */
+}
+
+input[type="text"] {
+  height: 10px; /* Gör fälten lika höga som knapparna */
+  font-size: 1rem; /* Gör texten större */
+  padding: 10px; /* Lägg till mer inre marginal */
+  border: 2px solid #ccc; /* Ger en snyggare kant */
+  border-radius: 8px; /* Rundade hörn */
+  outline: none; /* Tar bort blå kant vid fokus */
+  transition: all 0.3s ease-in-out; /* Gör förändringar mjukare */
+}
+
+/* Effekt när man klickar i fältet */
+input[type="text"]:focus {
+  border-color: #0052aa; /* Blir blå vid fokus */
+  box-shadow: 0px 0px 8px rgba(0, 82, 170, 0.5);
+}
 

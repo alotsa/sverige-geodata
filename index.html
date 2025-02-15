@@ -6,6 +6,10 @@
 
   <!-- Egen CSS för styling -->
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
+
   
   <!-- Leaflet CSS för kartan -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -18,14 +22,14 @@
 </head>
 <body>
   <h1>Sverigekartan</h1>
+  <p class="subtitle">Hitta platsens län, kommun och landskap</p>
+
   
   <!-- Avsnitt för sökning av plats med ortnamn -->
   <div id="place-search">
     <input id="placeName" type="text" placeholder="Plats (t.ex. Stockholm)" />
     <button id="searchPlaceButton">Sök</button>
   </div>
-  
-  <br>
   
   <!-- Avsnitt för sökning av plats med koordinater -->
   <div id="search">
@@ -49,7 +53,6 @@
   <h2>Hämta geodata från koordinater</h2>
   <p>Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplas till motsvarande län, landskap (eller lappmark) och kommun.</p>
 
-  <h3>Så här gör du:</h3>
   <ol>
     <li>Välj din Excel-fil.</li>
     <li>Klicka på <strong>"Hämta geodata"</strong>.</li>
@@ -58,9 +61,15 @@
   
   <!-- Filuppladdning för Excel + knapp för att starta bearbetning -->
   <div id="excel-upload">
+    <label for="excelFile" class="custom-file-upload">
+      <i class="fas fa-upload"></i> Välj fil
+    </label>
     <input type="file" id="excelFile" accept=".xlsx,.xls" />
     <button id="processBtn">Hämta geodata</button>
   </div>
+  
+
+  <br>
 
   <h3>Filformat & krav</h3>
   <p>Filen du laddar upp ska vara i <strong>Excel-format</strong> (<code>.xlsx</code> eller <code>.xls</code>) och innehålla följande kolumner:</p>
@@ -73,22 +82,26 @@
       </tr>
       <tr>
         <td><code>lat</code></td>
-        <td>Latitud i decimaltal (WGS84).</td>
+        <td>Latitud i decimaltal</td>
       </tr>
       <tr>
         <td><code>lon</code></td>
-        <td>Longitud i decimaltal (WGS84).</td>
+        <td>Longitud i decimaltal</td>
       </tr>
     </tbody>
   </table>
 
-  <p><strong>Viktigt:</strong></p>
+  <br>
+
+  <h3>Viktigt</h3>
   <ul>
-    <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver).</li>
-    <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>).</li>
+    <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver)</li>
+      <li>Koordinaterna ska vara i WGS84</li>
+      <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>)</li>
   </ul>
 
-  <h2>Datakällor</h2>
+  <details>
+    <summary class="data-title">Datakällor (klicka för mer information)</summary>
   <p>Bakgrundskartan kommer från OpenStreetMap. Information om adress, kommun och län hämtas via Nominatims geokodningstjänst.</p>
   <p>Lagren som kan tändas och släckas i kartan baseras på:</p>
   <ul>
@@ -99,6 +112,7 @@
   </ul>
   <p>Information om län och kommun kan skilja sig mellan OpenStreetMap/Nominatim och Lantmäteriets data, särskilt om punkten ligger mycket nära en gräns.</p>
   <p>När du hämtar geodata baseras län och kommun på data från Lantmäteriet, inte OpenStreetMap.</p>
+  </details>
 </div>
 
 <br>
@@ -109,4 +123,12 @@
   <!-- Din egen JavaScript som innehåller kart-logik, Excel-bearbetning osv. -->
   <script src="script.js"></script>
 </body>
+
+<footer>
+  <a href="https://github.com/alotsa" target="_blank" class="github-link">
+    <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg" alt="GitHub" class="github-icon">
+  </a>
+  <p>alotsa 2025</p>
+</footer>
+
 </html>
