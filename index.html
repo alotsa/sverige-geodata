@@ -1,134 +1,146 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sverigekartan</title>
 
-  <!-- Egen CSS för styling -->
+  <!-- Egen CSS -->
   <link rel="stylesheet" href="style.css">
+
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
 
-  
-  <!-- Leaflet CSS för kartan -->
+  <!-- Leaflet CSS (för kartan) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
   <!-- SheetJS (xlsx) för att läsa/skriva Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  <!-- Turf.js för geospatiell analys (ex. punkt-i-polygon) -->
+  <!-- Turf.js (för geospatiell analys) -->
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
 </head>
 <body>
-  <h1>Sverigekartan</h1>
-  <p class="subtitle">Hitta platsens län, kommun och landskap</p>
 
-  
-  <!-- Avsnitt för sökning av plats med ortnamn -->
-  <div id="place-search">
-    <input id="placeName" type="text" placeholder="Plats (t.ex. Stockholm)" />
-    <button id="searchPlaceButton">Sök</button>
-  </div>
-  
-  <!-- Avsnitt för sökning av plats med koordinater -->
-  <div id="search">
-    <input id="latitude" type="text" placeholder="Latitud (t.ex. 62.0)" />
-    <input id="longitude" type="text" placeholder="Longitud (t.ex. 15.0)" />
-    <button id="searchButton">Sök</button>
-  </div>
-  
-  <!-- Visar resultatlista från platssökning (Nominatim) -->
-  <div id="results"></div>
-  
-  <br>
-  
-  <!-- Kartbehållare -->
-  <div id="map"></div>
-  
-  <br>
+  <main class="container">
+    <!-- Rubriker -->
+    <h1>Sverigekartan</h1>
+    <p class="subtitle">Hitta platsens län, kommun och landskap</p>
 
-<!-- Instruktioner för att ladda upp och bearbeta Excel-filer -->
-<div id="geo-instructions">
-  <h2>Hämta geodata från koordinater</h2>
-  <p>Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplas till motsvarande län, landskap (eller lappmark) och kommun.</p>
+    <!-- 🔍 Sökning efter plats -->
+    <section id="search-section">
+      <div id="place-search">
+        <input id="placeName" type="text" placeholder="Plats (t.ex. Stockholm)" />
+        <button id="searchPlaceButton">Sök</button>
+      </div>
 
-  <ol>
-    <li>Välj din Excel-fil.</li>
-    <li>Klicka på <strong>"Hämta geodata"</strong>.</li>
-    <li>Den bearbetade filen laddas ner automatiskt.</li>
-  </ol>
-  
-  <!-- Filuppladdning för Excel + knapp för att starta bearbetning -->
-  <div id="excel-upload">
-    <label for="excelFile" class="custom-file-upload">
-      <i class="fas fa-upload"></i> Välj fil
-    </label>
-    <input type="file" id="excelFile" accept=".xlsx,.xls" />
-    <button id="processBtn">Hämta geodata</button>
-  </div>
-  
+      <div id="search">
+        <input id="latitude" type="text" placeholder="Latitud (t.ex. 62.0)" />
+        <input id="longitude" type="text" placeholder="Longitud (t.ex. 15.0)" />
+        <button id="searchButton">Sök</button>
+      </div>
 
-  <br>
+      <!-- Visar resultatlista från platssökning -->
+      <div id="results"></div>
+    </section>
 
-  <h3>Filformat & krav</h3>
-  <p>Filen du laddar upp ska vara i <strong>Excel-format</strong> (<code>.xlsx</code> eller <code>.xls</code>) och innehålla följande kolumner:</p>
+    <br>
 
-  <table>
-    <tbody>
-      <tr>
-        <td><code>id</code> </td>
-        <td>Unikt rad-ID (t.ex. katalognummer, accessionsnummer; <em>valfritt)</em></td>
-      </tr>
-      <tr>
-        <td><code>lat</code></td>
-        <td>Latitud i decimaltal</td>
-      </tr>
-      <tr>
-        <td><code>lon</code></td>
-        <td>Longitud i decimaltal</td>
-      </tr>
-    </tbody>
-  </table>
+    <!-- 🗺️ Karta -->
+    <section id="map-section">
+      <div id="map"></div>
+    </section>
 
-  <br>
+    <br>
 
-  <h3>Viktigt</h3>
-  <ul>
-    <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver)</li>
-      <li>Koordinaterna ska vara i WGS84</li>
-      <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>)</li>
-  </ul>
+    <!-- 📂 Hämta geodata från koordinater -->
+    <section id="geo-instructions">
+      <h2>Hämta geodata från koordinater</h2>
+      <p>Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplas till län, landskap (eller lappmark) och kommun.</p>
 
-  <details>
-    <summary class="data-title">Datakällor (klicka för mer information)</summary>
-  <p>Bakgrundskartan kommer från OpenStreetMap. Information om adress, kommun och län hämtas via Nominatims geokodningstjänst.</p>
-  <p>Lagren som kan tändas och släckas i kartan baseras på:</p>
-  <ul>
-    <li>Län: Lantmäteriets Sverigekartor</li>
-    <li>Kommun: Lantmäteriets Sverigekartor</li>
-    <li>Landskap: Lantmäteriets distriktsindelning</li>
-    <li>Lappmarkerna är avgränsade med hjälp av kommungränser</li>
-  </ul>
-  <p>Information om län och kommun kan skilja sig mellan OpenStreetMap/Nominatim och Lantmäteriets data, särskilt om punkten ligger mycket nära en gräns.</p>
-  <p>När du hämtar geodata baseras län och kommun på data från Lantmäteriet, inte OpenStreetMap.</p>
-  </details>
-</div>
+      <ol>
+        <li>Välj din Excel-fil.</li>
+        <li>Klicka på <strong>"Hämta geodata"</strong>.</li>
+        <li>Den bearbetade filen laddas ner automatiskt.</li>
+      </ol>
 
-<br>
+      <!-- Filuppladdning för Excel + knapp för att starta bearbetning -->
+      <div id="excel-upload">
+        <label for="excelFile" class="custom-file-upload">
+          <i class="fas fa-upload"></i> Välj fil
+        </label>
+        <input type="file" id="excelFile" accept=".xlsx,.xls" />
+        <button id="processBtn">Hämta geodata</button>
+      <!-- Flytta in "Vald fil"-elementet här: -->
+        <span id="selectedFileName" class="file-info"></span>
+      </div>
+      
 
-  <!-- Leaflet JS för kartfunktionalitet -->
+      <br>
+
+      <!-- 📑 Filformat & krav -->
+      <h3>Filformat & krav</h3>
+      <p>Filen du laddar upp ska vara i <strong>Excel-format</strong> (<code>.xlsx</code> eller <code>.xls</code>) och innehålla följande kolumner:</p>
+
+      <table>
+        <tbody>
+          <tr>
+            <td><code>id</code></td>
+            <td>Unikt rad-ID (t.ex. katalognummer eller lokal-id; <em>valfritt</em>)</td>
+          </tr>
+          <tr>
+            <td><code>lat</code></td>
+            <td>Latitud i decimaltal</td>
+          </tr>
+          <tr>
+            <td><code>lon</code></td>
+            <td>Longitud i decimaltal</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <br>
+
+      <!-- ℹ️ Viktig information -->
+      <h3>Viktigt</h3>
+      <ul>
+        <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver).</li>
+        <li>Koordinaterna ska vara i WGS84.</li>
+        <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>).</li>
+      </ul>
+
+      <!-- ℹ️ Datakällor -->
+      <h3>Datakällor</h3>
+      <details>
+        <summary>Klicka för mer information</summary>
+        <p>Bakgrundskartan kommer från OpenStreetMap. Information om adress, kommun och län hämtas via Nominatims geokodningstjänst.</p>
+        <p>Lagren som kan tändas och släckas i kartan baseras på:</p>
+        <ul>
+          <li>Län: Lantmäteriets Sverigekartor</li>
+          <li>Kommun: Lantmäteriets Sverigekartor</li>
+          <li>Landskap: Lantmäteriets distriktsindelning</li>
+          <li>Lappmarkerna är avgränsade med hjälp av kommungränser</li>
+        </ul>
+        <p>Information om län och kommun kan skilja sig mellan OpenStreetMap/Nominatim och Lantmäteriets data, särskilt om punkten ligger mycket nära en gräns.</p>
+        <p>När du hämtar geodata baseras län och kommun på data från Lantmäteriet, inte OpenStreetMap.</p>
+      </details>
+    </section>
+
+    <br>
+  </main>
+
+  <!-- 📜 JavaScript-filer -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-  <!-- Din egen JavaScript som innehåller kart-logik, Excel-bearbetning osv. -->
   <script src="script.js"></script>
+
+  <!-- ⚡ Footer -->
+  <footer>
+    <a href="https://github.com/alotsa" target="_blank" class="github-link">
+      <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg" alt="GitHub" class="github-icon">
+    </a>
+  </footer>
+
 </body>
-
-<footer>
-  <a href="https://github.com/alotsa" target="_blank" class="github-link">
-    <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg" alt="GitHub" class="github-icon">
-  </a>
-  <p>alotsa 2025</p>
-</footer>
-
 </html>
