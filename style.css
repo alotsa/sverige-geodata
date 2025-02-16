@@ -305,11 +305,11 @@ footer {
   padding: 15px;
   background-color: #051d35; /* Ljus bakgrund för bättre synlighet */
   margin-bottom: 20px;
-  margin-left: 5px; !important
-  margin-right: 5px; !important
 }
 
 #logo {
   max-width: 300px; /* Anpassa bredden, justera efter behov */
   height: auto; /* Bevara proportioner */
+  margin-left: 5px; !important
+  margin-right: 5px; !important
 }
