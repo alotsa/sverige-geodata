@@ -1,8 +1,8 @@
 /* ======= GLOBALA INSTÄLLNINGAR ======= */
 html, body {
   height: 100%;
-  margin: 5px;
-  padding: 2px;
+  margin: 15;
+  padding: 0;
   font-family: Calibri, sans-serif;
 }
 
@@ -300,16 +300,18 @@ footer {
 /* ======= HEADER & LOGOTYP ======= */
 #header {
   display: flex;
-  justify-content: center; /* vänsterställer logotypen */
-  align-items: left;
+  justify-content: center; /* Centrerar logotypen */
+  align-items: center; /* Centrerar vertikalt */
   padding: 15px;
-  background-color: #051d35; /* Ljus bakgrund för bättre synlighet */
+  background-color: #051d35;
   margin-bottom: 20px;
+  width: 100%; /* Se till att den sträcker sig över hela sidan */
+  box-sizing: border-box; /* Säkerställer att padding inte påverkar bredden */
 }
 
+/* Logotyp */
 #logo {
-  max-width: 300px; /* Anpassa bredden, justera efter behov */
-  height: auto; /* Bevara proportioner */
-  margin-left: 5px; !important
-  margin-right: 5px; !important
+  max-width: 300px; /* Justera storleken om det behövs */
+  height: auto;
+  margin: 0 auto; /* Ser till att den är centrerad */
 }
