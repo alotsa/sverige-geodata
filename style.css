@@ -40,8 +40,7 @@ html, body {
 /* ======= RUBRIKER ======= */
 h1 {
   font-family: 'Jersey 10', sans-serif;
-  font-size: 4.5em;
-  text-transform: uppercase;
+  font-size: 6em;
   text-align: left;
   color: #051d35;
   margin-bottom: 5px;
@@ -296,4 +295,19 @@ footer {
 .no-results {
   padding: 10px;
   color: #888;
+}
+
+/* ======= HEADER & LOGOTYP ======= */
+#header {
+  display: flex;
+  justify-content: center; /* vänsterställer logotypen */
+  align-items: left;
+  padding: 15px;
+  background-color: #051d35; /* Ljus bakgrund för bättre synlighet */
+  margin-bottom: 20px;
+}
+
+#logo {
+  max-width: 500px; /* Anpassa bredden, justera efter behov */
+  height: auto; /* Bevara proportioner */
 }

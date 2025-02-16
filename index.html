@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <header id="header">
+    <img src="geoLocus_small.png" alt="geoLocus logotyp" id="logo">
+  </header>
+  
   <title>geoLocus</title>
 
   <!-- Egen CSS -->
@@ -26,14 +30,14 @@
 
   <main class="container">
     <!-- Rubriker -->
-    <h1>geoLocus</h1>
     <p class="subtitle">Hitta platsens län, kommun och landskap</p>
+    <p>Använd sökfunktionen eller klicka direkt i kartan.</p>
 
 <!-- 🔍 Sökning efter plats -->
 <section id="search-section">
   <div id="place-search">
     <input id="placeName" type="text" placeholder="Plats (t.ex. Stockholm)" />
-    <button id="searchPlaceButton">Sök</button>
+    <button id="searchPlaceButton">Sök plats</button>
 
     <!-- Visar resultatlista från platssökning -->
     <div id="results"></div>
@@ -42,7 +46,7 @@
   <div id="search">
     <input id="latitude" type="text" placeholder="Latitud (t.ex. 62.0)" />
     <input id="longitude" type="text" placeholder="Longitud (t.ex. 15.0)" />
-    <button id="searchButton">Sök</button>
+    <button id="searchButton">Sök koordinater</button>
   </div>
 </section>   
 
@@ -61,9 +65,9 @@
       <p>Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplas till län, landskap (eller lappmark) och kommun.</p>
 
       <ol>
-        <li>Välj din Excel-fil.</li>
-        <li>Klicka på <strong>"Hämta geodata"</strong>.</li>
-        <li>Den bearbetade filen laddas ner automatiskt.</li>
+        <li>Välj din Excel-fil</li>
+        <li>Klicka på <strong>"Hämta geodata"</strong></li>
+        <li>Den bearbetade filen laddas ner automatiskt</li>
       </ol>
 
       <!-- Filuppladdning för Excel + knapp för att starta bearbetning -->
@@ -106,9 +110,9 @@
       <!-- ℹ️ Viktig information -->
       <h3>Viktigt</h3>
       <ul>
-        <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver).</li>
-        <li>Koordinaterna ska vara i WGS84.</li>
-        <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>).</li>
+        <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver)</li>
+        <li>Koordinaterna ska vara i WGS84</li>
+        <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>)</li>
       </ul>
 
       <!-- ℹ️ Datakällor -->
