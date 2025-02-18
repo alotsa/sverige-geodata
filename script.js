@@ -390,3 +390,45 @@ document.addEventListener('click', function(event) {
     resultsContainer.innerHTML = "";
   }
 });
+
+// 🛠️ Definiera projektionerna korrekt för RT90, SWEREF99 TM och WGS84
+proj4.defs([
+  ["EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs"], // WGS84
+  ["EPSG:3006", "+proj=utm +zone=33 +ellps=GRS80 +datum=WGS84 +units=m +no_defs"], // SWEREF 99 TM
+  ["EPSG:3847", "+proj=tmerc +lat_0=0 +lon_0=15.806284529 +k=1.00000561024 +x_0=1500064.274 +y_0=-667.711 +ellps=bessel +datum=WGS84 +units=m +towgs84=-414.1,41.3,603.1,0.855,2.141,7.023,0"] // RT90 2.5 gon V
+]);
+
+document.getElementById("convertButton").addEventListener("click", function() {
+  let rt90Input = document.getElementById("rt90Input").value.trim();
+  let swerefInput = document.getElementById("swerefInput").value.trim();
+  let wgs84Input = document.getElementById("wgs84Input").value.trim();
+
+  let rt90, sweref, wgs84;
+
+  if (rt90Input) {
+      let [y, x] = rt90Input.split(",").map(Number); // (N, E) → (Y, X) format
+      wgs84 = proj4("EPSG:3847", "EPSG:4326", [x, y]);  // RT90 → WGS84 direkt
+      sweref = proj4("EPSG:4326", "EPSG:3006", wgs84);   // WGS84 → SWEREF99
+  } 
+  else if (swerefInput) {
+      let [y, x] = swerefInput.split(",").map(Number); // (N, E) → (Y, X) format
+      wgs84 = proj4("EPSG:3006", "EPSG:4326", [x, y]);  // SWEREF99 → WGS84
+      rt90 = proj4("EPSG:4326", "EPSG:3847", wgs84);    // WGS84 → RT90
+  } 
+  else if (wgs84Input) {
+      let [lat, lon] = wgs84Input.split(",").map(Number);
+      rt90 = proj4("EPSG:4326", "EPSG:3847", [lon, lat]); // WGS84 → RT90
+      sweref = proj4("EPSG:4326", "EPSG:3006", [lon, lat]); // WGS84 → SWEREF99
+  } else {
+      alert("Ange minst en koordinat för att konvertera.");
+      return;
+  }
+
+  // ✅ Fixat ordningen på WGS84 (Nu: Lat, Lon)
+  document.getElementById("wgs84Result").textContent = wgs84 ? `${wgs84[1].toFixed(5)}, ${wgs84[0].toFixed(5)}` : "-";
+
+  // ✅ Fixat RT90 & SWEREF ordning och rundat av till heltal
+  document.getElementById("rt90Result").textContent = rt90 ? `${Math.round(rt90[1])}, ${Math.round(rt90[0])}` : "-";
+  document.getElementById("swerefResult").textContent = sweref ? `${Math.round(sweref[1])}, ${Math.round(sweref[0])}` : "-";
+});
+

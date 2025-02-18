@@ -25,6 +25,11 @@
 
   <!-- Turf.js (för geospatiell analys) -->
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+
+  <!-- Lägg till Proj4.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.6.2/proj4.js"></script>
+
+
 </head>
 <body>
 
@@ -58,6 +63,26 @@
     </section>
 
     <br>
+
+<!-- 🔄 Koordinatkonvertering -->
+<section id="coordinate-converter">
+  <h2>Konvertera koordinater</h2>
+
+  <div class="converter-fields">
+    <input type="text" id="wgs84Input" placeholder="WGS84 (Lat, Lon)">
+    <input type="text" id="rt90Input" placeholder="RT90 (X, Y)">
+    <input type="text" id="swerefInput" placeholder="SWEREF 99 (X, Y)">
+    <button id="convertButton">Konvertera</button>
+  </div>
+
+  <div id="conversion-results">
+    <h3>Resultat:</h3>
+    <p><strong>WGS84:</strong> <span id="wgs84Result">-</span></p>
+    <p><strong>RT90:</strong> <span id="rt90Result">-</span></p>
+    <p><strong>SWEREF99:</strong> <span id="swerefResult">-</span></p>
+  </div>
+</section>
+
 
     <!-- 📂 Hämta geodata från koordinater -->
     <section id="geo-instructions">
