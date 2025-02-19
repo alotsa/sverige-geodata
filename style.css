@@ -1,9 +1,30 @@
 /* ======= GLOBALA INSTÄLLNINGAR ======= */
 html, body {
   height: 100%;
-  margin: 15;
-  padding: 0;
+  margin: 5px;
   font-family: Calibri, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Håller allt innehåll på sidan flexibelt */
+.wrapper {
+  flex: 1; /* Ser till att innehållet trycker ner footern */
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 60px; /* Se till att inget innehåll hamnar under footern */
+}
+
+/* Gör huvudinnehållet flexibelt */
+.tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Huvudinnehållet ska växa så footern trycks ner */
+main {
+  flex: 1;
 }
 
 /* ======= KARTA ======= */
@@ -49,17 +70,20 @@ h1 {
 
 .subtitle {
   font-family: 'Quicksand', sans-serif;
-  font-size: 1.5em;
+  font-size: 1.3em;
   text-align: left;
   color: #051d35;
   font-weight: 500;
-  margin-top: 0;
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
 h2, h3 {
   font-family: 'Quicksand', sans-serif;
   font-weight: 500;
   color: #051d35;
+  margin-bottom: 5px;
+  margin-top: 5px;
 }
 
 h2 {
@@ -143,7 +167,7 @@ input[type="file"] {
 /* Ställ in samma höjd för input och knappar */
 input[type="text"],
 button {
-  height: 40px; /* Justerad höjd för båda */
+  height: 35px; /* Justerad höjd för båda */
   font-size: 1rem;
   padding: 8px 12px;
   border-radius: 8px;
@@ -176,17 +200,42 @@ button {
   box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Hover-effekt på knappar */
-button:hover {
-  background-color: #0052aa;
-  box-shadow: 2px 6px 10px rgba(0, 0, 0, 0.3);
-  transform: translateY(-2px);
+/* Stil för tab-knappar */
+.tab-button {
+  background-color: #00b109;
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center; /* Se till att input och knapp är i linje */
+  gap: 8px; /* Skapar mellanrum mellan input och knapp */
+  margin-bottom: 10px; /* Avstånd under varje sökrad */
+  margin-top: 5px; /* Avstånd under varje sökrad */
+  height: 35px; /* Justerad höjd för båda */
+  font-size: 1rem;
+  padding: 8px 12px;
+  border-radius: px;
+  box-sizing: border-box; /* Padding & border ingår i höjden */
+  flex-wrap: wrap; /* Om det blir för trångt, läggs de på nästa rad */
+
 }
 
-/* Aktiv effekt vid klick */
-button:active {
-  background-color: #004699;
-  transform: translateY(1px);
+.tab-container {
+  display: flex;
+  justify-content: center; /* Centrera knapparna horisontellt */
+  align-items: center; /* Centrera vertikalt */
+  flex-wrap: wrap; /* Tillåt att knappar bryts till nästa rad vid små skärmar */
+  gap: 10px; /* Skapar mellanrum mellan input och knapp */
+}
+
+/* Hover-effekt på knappar */
+button:hover {
+  background-color: #00330c;
+  box-shadow: 2px 6px 10px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
 }
 
 /* ======= RESPONSIV TABELL ======= */
@@ -205,10 +254,13 @@ table td, table th {
 /* ======= GITHUB-FOOTER ======= */
 footer {
   text-align: center;
-  margin-top: 20px;
   padding: 15px;
-  background-color: #e7e7e7; /* Ljus bakgrund för separation */
+  background-color: #e7e7e7;
   font-size: 0.9rem;
+  width: 100%;
+  position: fixed; /* Gör att footern alltid är längst ner */
+  bottom: 0;
+  left: 0;
 }
 
 /* GitHub-ikon */
@@ -230,6 +282,55 @@ footer {
   fill: #1a73e8;
   transform: scale(1.2);
 }
+
+/* ======= KOORDINATKONVERTERINGSFÄLT ======= */
+#coordinate-conversion {
+  display: flex;
+  flex-direction: column; /* Stapla fälten på varandra */
+  gap: 10px; /* Samma mellanrum som i sökfälten */
+  margin-bottom: 10px; /* Avstånd under konverteringssektionen */
+}
+
+#coordinate-conversion input {
+  height: 40px; /* Samma höjd som andra fält */
+  font-size: 1rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid #ccc;
+  outline: none;
+  transition: border-color 0.3s ease-in-out;
+  
+}
+
+#coordinate-conversion input:focus {
+  border-color: #0052aa;
+  box-shadow: 0px 0px 6px rgba(0, 82, 170, 0.5);
+}
+
+#coordinate-conversion button {
+  height: 40px;
+  font-size: 1rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: #051d35;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+#coordinate-conversion button:hover {
+  background-color: #0052aa;
+  box-shadow: 2px 6px 10px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+#coordinate-conversion button:active {
+  background-color: #004699;
+  transform: translateY(1px);
+}
+
 
 /* ======= MEDIA QUERIES ======= */
 
@@ -315,3 +416,4 @@ footer {
   height: auto;
   margin: 0 auto; /* Ser till att den är centrerad */
 }
+

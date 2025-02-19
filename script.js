@@ -432,3 +432,27 @@ document.getElementById("convertButton").addEventListener("click", function() {
   document.getElementById("swerefResult").textContent = sweref ? `${Math.round(sweref[1])}, ${Math.round(sweref[0])}` : "-";
 });
 
+//Tabbar
+
+document.addEventListener("DOMContentLoaded", function () {
+  openTab('main'); // Visa huvudfliken från start
+});
+
+function openTab(tabId) {
+  // Dölj alla tabbar
+  document.querySelectorAll(".tab-content").forEach(tab => {
+      tab.style.display = "none";
+  });
+
+  // Visa den valda tabben
+  let activeTab = document.getElementById(tabId);
+  activeTab.style.display = "block";
+
+  // Om kartan finns i en flik, uppdatera den
+  if (tabId === "main" && typeof map !== "undefined") {
+      setTimeout(() => {
+          map.invalidateSize();
+      }, 300);
+  }
+}
+

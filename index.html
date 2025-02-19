@@ -3,12 +3,170 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <header id="header">
-    <img src="geoLocus_small.png" alt="geoLocus logotyp" id="logo">
-  </header>
-  
   <title>geoLocus</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="header">
+    <div>
+      <img src="geoLocus_small.png" alt="geoLocus logotyp" id="logo">
+    </div>
+  </header>   
+  <div class="tab-wrapper">
+    <div class="tab-container">
+        <button class="tab-button" onclick="openTab('main')">Karta</button>
+        <button class="tab-button" onclick="openTab('converter')">Konvertera</button>
+        <button class="tab-button" onclick="openTab('Hämta geodata')">Hämta geodata</button>
+    </div>
+</div>
+<div id="main" class="tab-content">
+      <main class="container">
+        <!-- Rubriker -->
+        <h2>Hitta platsens län, kommun, landskap och lappmark</h2>
+        <p>Använd sökfunktionen eller klicka direkt i kartan.</p>
+    
+    <!-- 🔍 Sökning efter plats -->
+    <section id="search-section">
+      <div id="place-search">
+        <input id="placeName" type="text" placeholder="Plats (t.ex. Stockholm)" />
+        <button id="searchPlaceButton">Sök plats</button>   
+    
+        <!-- Visar resultatlista från platssökning -->
+        <div id="results"></div>
+      </div>
+    
+      <div id="search">
+        <input id="latitude" type="text" placeholder="Latitud (t.ex. 62.0)" />
+        <input id="longitude" type="text" placeholder="Longitud (t.ex. 15.0)" />
+        <button id="searchButton">Sök koordinater</button>
+      </div>
+    </section>   
+      
+        <!-- 🗺️ Karta -->
+        <section id="map-section">
+          <div id="map"></div>
+        </section>
+  
+              <!-- ℹ️ Söktips -->
+      <h3>Söktips</h3>
+      <details>
+        <summary>Klicka för att visa</summary>
+        <ul>
+          <li>Du kan söka på ortnamn, sjöar, bäckar, vägnummer, trafikplatser, byggnader, restauranger m.m.</li>
+          <li>För att hitta länsvägar (LV), sök på <a href="https://sv.wikipedia.org/wiki/L%C3%A4nsbokstav" target="_blank" rel="noopener noreferrer">länsbokstav</a>
+             + vägnummer, t.ex. AB 1035</li>
+          <li>Riksvägar (RV) inleds inte med någon bokstav</li>
+          <li>Listan med förslag som visas efter en sökning är begränsad till 10 träffar</li>
+          <li>Platssök visar endast träffar i Sverige</li>
+        </ul>
+      </details>
+    </section>
+    <br>
+  <!-- ℹ️ Datakällor -->
+  <h3>Datakällor</h3>
+    <p>Bakgrundskartan kommer från OpenStreetMap. Information om adress, kommun och län hämtas via Nominatims geokodningstjänst.</p>
+    <p>Lagren som kan tändas och släckas i kartan baseras på:</p>
+    <ul>
+      <li>Län: Lantmäteriets Sverigekartor</li>
+      <li>Kommun: Lantmäteriets Sverigekartor</li>
+      <li>Landskap: Lantmäteriets distriktsindelning</li>
+      <li>Lappmarkerna är avgränsade med hjälp av kommungränser</li>
+    </ul>
+    <p>Information om län och kommun kan skilja sig mellan OpenStreetMap/Nominatim och Lantmäteriets data, särskilt om punkten ligger mycket nära en gräns.</p>
+</section>
 
+        <br>
+      </main>
+
+</div>
+
+<div id="converter" class="tab-content" style="display: none;">
+  <!-- 🔄 Koordinatkonvertering -->
+  <h2>Konvertera koordinater</h2>
+<br>
+  <section id="coordinate-converter" class="converter-container">
+    <!-- Inmatningsfält -->
+    <div class="converter-fields">
+      <input type="text" id="wgs84Input" placeholder="WGS84 (Lat, Lon)">
+      <input type="text" id="rt90Input" placeholder="RT90 (X, Y)">
+      <input type="text" id="swerefInput" placeholder="SWEREF 99 (X, Y)">
+      <button id="convertButton">Konvertera</button>
+    </div>
+
+    <br>
+
+    <!-- Resultat -->
+    <div id="conversion-results">
+      <h3>Resultat:</h3>
+      <p><strong>WGS84:</strong> <span id="wgs84Result">-</span></p>
+      <p><strong>RT90:</strong> <span id="rt90Result">-</span></p>
+      <p><strong>SWEREF99:</strong> <span id="swerefResult">-</span></p>
+    </div>
+  </section>
+  <footer>
+    <a href="https://github.com/alotsa" target="_blank" class="github-link">
+      <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg" alt="GitHub" class="github-icon">
+    </a>
+  </footer>
+</div>
+
+<div id="Hämta geodata" class="tab-content" style="display: none;">
+<!-- 📂 Hämta geodata från koordinater -->
+<section id="geo-instructions">
+  <h2>Hämta geodata från koordinater</h2>
+  <p>Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplas till län, landskap (eller lappmark) och kommun.</p>
+
+  <ol>
+    <li>Välj din Excel-fil</li>
+    <li>Klicka på <strong>"Hämta geodata"</strong></li>
+    <li>Den bearbetade filen laddas ner automatiskt</li>
+  </ol>
+
+  <!-- Filuppladdning för Excel + knapp för att starta bearbetning -->
+  <div id="excel-upload">
+    <label for="excelFile" class="custom-file-upload">
+      <i class="fas fa-upload"></i> Välj fil
+    </label>
+    <input type="file" id="excelFile" accept=".xlsx,.xls" />
+    <button id="processBtn">Hämta geodata</button>
+  <!-- Flytta in "Vald fil"-elementet här: -->
+    <span id="selectedFileName" class="file-info"></span>
+  </div>
+
+  <br>
+
+  <!-- 📑 Filformat & krav -->
+  <h3>Filformat & krav</h3>
+  <p>Filen du laddar upp ska vara i <strong>Excel-format</strong> (<code>.xlsx</code> eller <code>.xls</code>) och innehålla följande kolumner:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><code>id</code></td>
+        <td>Unikt rad-ID (t.ex. katalognummer eller lokal-id; <em>valfritt</em>)</td>
+      </tr>
+      <tr>
+        <td><code>lat</code></td>
+        <td>Latitud i decimaltal</td>
+      </tr>
+      <tr>
+        <td><code>lon</code></td>
+        <td>Longitud i decimaltal</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <br>
+
+  <!-- ℹ️ Viktig information -->
+  <h3>Viktigt</h3>
+  <ul>
+    <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver)</li>
+    <li>Koordinaterna ska vara i WGS84</li>
+    <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>)</li>
+    <li>När du hämtar geodata baseras län och kommun på data från Lantmäteriet, inte OpenStreetMap</li>
+  </ul>
+  
   <!-- Egen CSS -->
   <link rel="stylesheet" href="style.css">
 
@@ -29,147 +187,13 @@
   <!-- Lägg till Proj4.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.6.2/proj4.js"></script>
 
+  <!-- Lägg till infoikon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-</head>
-<body>
-
-  <main class="container">
-    <!-- Rubriker -->
-    <p class="subtitle">Hitta platsens län, kommun och landskap</p>
-    <p>Använd sökfunktionen eller klicka direkt i kartan.</p>
-
-<!-- 🔍 Sökning efter plats -->
-<section id="search-section">
-  <div id="place-search">
-    <input id="placeName" type="text" placeholder="Plats (t.ex. Stockholm)" />
-    <button id="searchPlaceButton">Sök plats</button>
-
-    <!-- Visar resultatlista från platssökning -->
-    <div id="results"></div>
-  </div>
-
-  <div id="search">
-    <input id="latitude" type="text" placeholder="Latitud (t.ex. 62.0)" />
-    <input id="longitude" type="text" placeholder="Longitud (t.ex. 15.0)" />
-    <button id="searchButton">Sök koordinater</button>
-  </div>
-</section>   
-
-    <br>
-
-    <!-- 🗺️ Karta -->
-    <section id="map-section">
-      <div id="map"></div>
-    </section>
-
-    <br>
-
-<!-- 🔄 Koordinatkonvertering -->
-<section id="coordinate-converter">
-  <h2>Konvertera koordinater</h2>
-
-  <div class="converter-fields">
-    <input type="text" id="wgs84Input" placeholder="WGS84 (Lat, Lon)">
-    <input type="text" id="rt90Input" placeholder="RT90 (X, Y)">
-    <input type="text" id="swerefInput" placeholder="SWEREF 99 (X, Y)">
-    <button id="convertButton">Konvertera</button>
-  </div>
-
-  <div id="conversion-results">
-    <h3>Resultat:</h3>
-    <p><strong>WGS84:</strong> <span id="wgs84Result">-</span></p>
-    <p><strong>RT90:</strong> <span id="rt90Result">-</span></p>
-    <p><strong>SWEREF99:</strong> <span id="swerefResult">-</span></p>
-  </div>
-</section>
-
-
-    <!-- 📂 Hämta geodata från koordinater -->
-    <section id="geo-instructions">
-      <h2>Hämta geodata från koordinater</h2>
-      <p>Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplas till län, landskap (eller lappmark) och kommun.</p>
-
-      <ol>
-        <li>Välj din Excel-fil</li>
-        <li>Klicka på <strong>"Hämta geodata"</strong></li>
-        <li>Den bearbetade filen laddas ner automatiskt</li>
-      </ol>
-
-      <!-- Filuppladdning för Excel + knapp för att starta bearbetning -->
-      <div id="excel-upload">
-        <label for="excelFile" class="custom-file-upload">
-          <i class="fas fa-upload"></i> Välj fil
-        </label>
-        <input type="file" id="excelFile" accept=".xlsx,.xls" />
-        <button id="processBtn">Hämta geodata</button>
-      <!-- Flytta in "Vald fil"-elementet här: -->
-        <span id="selectedFileName" class="file-info"></span>
-      </div>
-      
-
-      <br>
-
-      <!-- 📑 Filformat & krav -->
-      <h3>Filformat & krav</h3>
-      <p>Filen du laddar upp ska vara i <strong>Excel-format</strong> (<code>.xlsx</code> eller <code>.xls</code>) och innehålla följande kolumner:</p>
-
-      <table>
-        <tbody>
-          <tr>
-            <td><code>id</code></td>
-            <td>Unikt rad-ID (t.ex. katalognummer eller lokal-id; <em>valfritt</em>)</td>
-          </tr>
-          <tr>
-            <td><code>lat</code></td>
-            <td>Latitud i decimaltal</td>
-          </tr>
-          <tr>
-            <td><code>lon</code></td>
-            <td>Longitud i decimaltal</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <br>
-
-      <!-- ℹ️ Viktig information -->
-      <h3>Viktigt</h3>
-      <ul>
-        <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver)</li>
-        <li>Koordinaterna ska vara i WGS84</li>
-        <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>)</li>
-      </ul>
-
-      <!-- ℹ️ Datakällor -->
-      <h3>Datakällor</h3>
-      <details>
-        <summary>Klicka för mer information</summary>
-        <p>Bakgrundskartan kommer från OpenStreetMap. Information om adress, kommun och län hämtas via Nominatims geokodningstjänst.</p>
-        <p>Lagren som kan tändas och släckas i kartan baseras på:</p>
-        <ul>
-          <li>Län: Lantmäteriets Sverigekartor</li>
-          <li>Kommun: Lantmäteriets Sverigekartor</li>
-          <li>Landskap: Lantmäteriets distriktsindelning</li>
-          <li>Lappmarkerna är avgränsade med hjälp av kommungränser</li>
-        </ul>
-        <p>Information om län och kommun kan skilja sig mellan OpenStreetMap/Nominatim och Lantmäteriets data, särskilt om punkten ligger mycket nära en gräns.</p>
-        <p>När du hämtar geodata baseras län och kommun på data från Lantmäteriet, inte OpenStreetMap.</p>
-      </details>
-    </section>
-
-    <br>
-  </main>
-
-  <!-- 📜 JavaScript-filer -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="script.js"></script>
-
-  <!-- ⚡ Footer -->
-  <footer>
-    <a href="https://github.com/alotsa" target="_blank" class="github-link">
-      <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg" alt="GitHub" class="github-icon">
-    </a>
-  </footer>
-
+      <!-- 📜 JavaScript-filer -->
+      <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+      <script src="script.js"></script>
+    
 </body>
 </html>
+    
