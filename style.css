@@ -125,7 +125,7 @@ h3 {
   font-size: 1.2em;
 }
 
-/* ======= FÄLLBARA AVSNITT (Datakällor m.m.) ======= */
+/* ======= FÄLLBARA AVSNITT (Söktips m.m.) ======= */
 .data-title {
   font-family: 'Quicksand', sans-serif;
   font-size: 1em;
@@ -195,6 +195,7 @@ input[type="file"] {
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
+  flex-direction: row !important;
 }
 
 input[type="text"],
@@ -239,16 +240,32 @@ input[type="text"]:focus {
   flex-wrap: wrap;
 }
 
-
-/* ======= KOORDINATKONVERTERING ======= */
-#coordinate-conversion {
+.tab-container {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  flex-wrap: wrap; /* Tillåt radbrytning */
 }
 
-#coordinate-conversion input {
+/* Media query för små skärmar (ex < 480px) */
+@media (max-width: 480px) {
+  .tab-button {
+    font-size: 0.85rem;   /* Minska texten en aning */
+    padding: 6px 10px;    /* Minska horisontell padding */
+    margin: 3px 0;        /* Mindre vertikalt mellanrum */
+  }
+}
+
+/* ======= KOORDINATKONVERTERING ======= */
+#coordinate-converter {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+#coordinate-converter input {
   height: 40px;
   font-size: 1rem;
   padding: 8px 12px;
@@ -258,12 +275,12 @@ input[type="text"]:focus {
   transition: border-color 0.3s ease-in-out;
 }
 
-#coordinate-conversion input:focus {
+#coordinate-converter input:focus {
   border-color: #0052aa;
   box-shadow: 0px 0px 6px rgba(0, 82, 170, 0.5);
 }
 
-#coordinate-conversion button {
+#coordinate-converter button {
   height: 40px;
   font-size: 1rem;
   padding: 8px 12px;
@@ -274,17 +291,26 @@ input[type="text"]:focus {
   cursor: pointer;
   transition: all 0.3s ease-in-out;
   box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.2);
+  align-self: flex-start;
 }
 
-#coordinate-conversion button:hover {
-  background-color: #0052aa;
+#coordinate-converter button:hover {
+  background-color: #007013;
   box-shadow: 2px 6px 10px rgba(0, 0, 0, 0.3);
   transform: translateY(-2px);
 }
 
-#coordinate-conversion button:active {
-  background-color: #004699;
+#coordinate-converter button:active {
+  background-color: #007013;
   transform: translateY(1px);
+}
+
+.converter-fields {
+  display: flex;
+  flex-direction: column; /* Stapla inmatningsfält och knapp på varandra */
+  gap: 0.5rem;           /* Skapar lite mellanrum mellan varje element */
+  align-items: flex-start; /* Placera dem till vänster (eller "center" om du föredrar) */
+  margin-bottom: 1rem;     /* Avstånd under sektionen */
 }
 
 /* ======= RESPONSIVA INSTÄLLNINGAR ======= */
@@ -298,6 +324,7 @@ input[type="text"]:focus {
   #place-search, #search {
     flex-direction: column;
     gap: 5px;
+    align-items: flex-start; /* Placera dem till vänster (eller "center" om du föredrar) */
   }
 }
 
