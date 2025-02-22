@@ -63,7 +63,6 @@ document.getElementById('excelFile').addEventListener('change', function(e) {
     : '';
 });
 
-
 /****************************************************
  * 3. BEARBETNING AV EXCEL-RADER
  ****************************************************/
@@ -105,7 +104,6 @@ function processRows(rows) {
   generateAndDownloadExcel(rows);
 }
 
-
 /****************************************************
  * 4. SÖK I POLYGONER (Turf.js)
  ****************************************************/
@@ -124,7 +122,6 @@ function polygonLookup(lon, lat, geojson, propertyName) {
   }
   return null;
 }
-
 
 /****************************************************
  * 5. GENERERA & LADDA NER EXCEL
@@ -154,28 +151,127 @@ function generateAndDownloadExcel(rows) {
   console.log("✅ Excel-fil med geodata skapad och nedladdad!");
 }
 
-
 /****************************************************
  * 6. LEAFLET-KARTA MED OLIKA LAGER
  ****************************************************/
-let overlayMaps = {};
 
+/**
+ * 1) Skapa kartan
+ */
 const map = L.map('map', {
   center: [59.3690, 18.0540],
-  zoom: 16
+  zoom: 16,
+  // Endast hela zoomsteg
+  zoomSnap: 1,
+  zoomDelta: 1,
+  // Undvik att gå över OSM:s maxzoom
+  minZoom: 0,
+  maxZoom: 19
 });
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+/**
+ * 2) OpenStreetMap som förvalt baslager
+ */
+var osmBase = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors',
   tileSize: 256,
-  detectRetina: true,
-  noWrap: true
+  // Rekommenderas false om man inte får riktiga retina-tiles:
+  detectRetina: false,
+  // Avaktivera "wrapping" om du vill begränsa kartan inom [-180, 180]
+  noWrap: true,
+  // Samma maxZoom här för att inte skala upp
+  maxZoom: 19
+}).addTo(map); // Läggs till direkt → syns från start
+
+/**
+ * 3) Definiera Lantmäteriets WMS-lager som overlays
+ *    (du kan justera maxZoom 17 vs. 19 beroende på vad Lantmäteriet levererar)
+ */
+var topowebb = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/topowebb/?', {
+    layers: ['topowebbkartan'],
+    format: 'image/png',
+    transparent: false,
+    maxZoom: 19,
+    maxNativeZoom: 19
+  }),
+  topowebb_nedtonad = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/topowebb/?', {
+    layers: ['topowebbkartan_nedtonad'],
+    format: 'image/png',
+    transparent: false,
+    maxZoom: 17,
+    maxNativeZoom: 17
+  }),
+  topowebb_grupperad = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/topowebb/?', {
+    layers: ['topowebbkartan'],
+    format: 'image/png',
+    transparent: true,
+    opacity: 0.75,
+    maxZoom: 17,
+    maxNativeZoom: 17
+  }),
+  ortofoto = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/ortofoto/?', {
+    layers: ['Ortofoto_0.5', 'Ortofoto_0.4', 'Ortofoto_0.25', 'Ortofoto_0.16'],
+    format: 'image/png',
+    transparent: false,
+    maxZoom: 17
+  }),
+  fastigheter_rod = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/fastighetsindelning/?', {
+    layers: ['granser', 'text'],
+    styles: ['ljusbakgrund', 'ljusbakgrund'],
+    maxZoom: 17,
+    transparent: true,
+    format: 'image/png'
+  }),
+  hojdmodell = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/hojdmodell/?', {
+    layers: ['terrangskuggning'],
+    maxZoom: 17,
+    transparent: true,
+    format: 'image/png'
+  }),
+  hojdmodell_grupperad = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/hojdmodell/?', {
+    layers: ['terrangskuggning'],
+    maxZoom: 17,
+    transparent: true,
+    format: 'image/png'
+  });
+
+/**
+ * 4) baseMaps & overlayMaps
+ *    - baseMaps: just "OpenStreetMap" (OSM)
+ *    - overlayMaps: alla Lantmäteriets lager
+ */
+let baseMaps = {
+  "OpenStreetMap": osmBase
+};
+
+let overlayMaps = {
+  "Topowebb": topowebb,
+  "Topowebb + Terräng": L.layerGroup([hojdmodell_grupperad, topowebb_grupperad]),
+  "Ortofoto": ortofoto,
+  "Fastigheter": fastigheter_rod
+};
+
+/**
+ * 5) Lagerkontroll
+ */
+let layerControl = L.control.layers(baseMaps, overlayMaps, {
+  position: 'bottomright', // Flytta till nedre högra hörnet
+  collapsed: true          // Menyn är hopfälld (”+” ikon)
 }).addTo(map);
+
+
+/**
+ * 6) Skala + eventuellt invalidateSize()
+ */
+L.control.scale().addTo(map);
 
 setTimeout(() => {
   map.invalidateSize();
 }, 500);
 
+/**
+ * 7) Funktion för GeoJSON-lager
+ */
 function addGeoJsonLayer(url, layerName) {
   fetch(url)
     .then(response => response.json())
@@ -196,16 +292,22 @@ function addGeoJsonLayer(url, layerName) {
       }
 
       const layer = L.geoJSON(geojsonData, { style: styleObj });
+
+      // Lägg till i overlayMaps
       overlayMaps[layerName] = layer;
       map.addLayer(layer);
 
-      if (Object.keys(overlayMaps).length === 3) {
-        L.control.layers(null, overlayMaps, { collapsed: false, position: 'bottomright' }).addTo(map);
-      }
+      // Uppdatera lagerkontrollen
+      layerControl.remove();
+      layerControl = L.control.layers(baseMaps, overlayMaps, {
+        position: 'bottomright', // Flytta till nedre högra hörnet
+        collapsed: true          // Menyn är hopfälld (”+” ikon)
+      }).addTo(map);      
     })
     .catch(err => console.error(`Error loading ${layerName}:`, err));
 }
 
+// Anropa GeoJSON-lagerinladdning om du vill
 addGeoJsonLayer('data/kommun.geojson', "Kommun");
 addGeoJsonLayer('data/lan.geojson', "Län");
 addGeoJsonLayer('data/landskap-lappmark.geojson', "Landskap");
@@ -216,7 +318,7 @@ addGeoJsonLayer('data/landskap-lappmark.geojson', "Landskap");
  ****************************************************/
 async function showAllInfo(lat, lng) {
   try {
-    // Reverse geocoding
+    // Reverse geocoding (Nominatim)
     const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
     const response = await fetch(nominatimUrl);
     const data = await response.json();
@@ -224,31 +326,36 @@ async function showAllInfo(lat, lng) {
     // Hantera fullständig adress och vänd ordningen
     let fullAddress = data.display_name || "Okänd plats";
     let addressParts = fullAddress.split(", ");
-    addressParts.reverse(); // Vänd ordningen så att större områden kommer först
+    addressParts.reverse(); // större områden först
     const formattedAddress = addressParts.join(", ");
 
-    // Polygonträffar
+    // Polygonträffar i aktiva lager
     let infoList = [];
     Object.entries(overlayMaps).forEach(([layerName, layer]) => {
+      // Kolla om just detta lager är påslaget
       if (!map.hasLayer(layer)) return;
-      layer.eachLayer(featureLayer => {
-        const f = featureLayer.feature;
-        if (f?.geometry) {
-          const pt = turf.point([lng, lat]);
-          if (turf.booleanPointInPolygon(pt, f)) {
-            const props = f.properties;
-            const foundKommun = props?.kommun || "";
-            const foundLan = props?.lan || "";
-            const foundLappmark = props?.["Landskap-lappmark"] || "";
 
-            let text = "";
-            if (foundKommun)   text += `<strong>Kommun:</strong> ${foundKommun}<br>`;
-            if (foundLan)      text += `<strong>Län:</strong> ${foundLan}<br>`;
-            if (foundLappmark) text += `<strong>Landskap:</strong> ${foundLappmark}<br>`;
-            infoList.push(text);
+      // Gå igenom alla features i just detta GeoJSON-lager (om det är geoJSON-lager)
+      if (layer.eachLayer) {
+        layer.eachLayer(featureLayer => {
+          const f = featureLayer.feature;
+          if (f?.geometry) {
+            const pt = turf.point([lng, lat]);
+            if (turf.booleanPointInPolygon(pt, f)) {
+              const props = f.properties;
+              const foundKommun = props?.kommun || "";
+              const foundLan = props?.lan || "";
+              const foundLappmark = props?.["Landskap-lappmark"] || "";
+
+              let text = "";
+              if (foundKommun)   text += `<strong>Kommun:</strong> ${foundKommun}<br>`;
+              if (foundLan)      text += `<strong>Län:</strong> ${foundLan}<br>`;
+              if (foundLappmark) text += `<strong>Landskap:</strong> ${foundLappmark}<br>`;
+              infoList.push(text);
+            }
           }
-        }
-      });
+        });
+      }
     });
 
     let polygonText = (infoList.length === 0)
@@ -277,49 +384,49 @@ async function showAllInfo(lat, lng) {
 /****************************************************
  * 8. KARTKLICK OCH SÖKFUNKTIONER
  ****************************************************/
-// Klick i kartan -> popup med info
+// Klick i kartan -> popup
 map.on('click', function(e) {
   const lat = e.latlng.lat;
   const lng = e.latlng.lng;
   showAllInfo(lat, lng);
 });
 
-// Koordinatsök
-document.getElementById('searchButton').addEventListener('click', function() {
-  const lat = parseFloat(document.getElementById('latitude').value);
-  const lng = parseFloat(document.getElementById('longitude').value);
+// Kombinerad sökfunktion (platssök & koordinatsök)
+document.getElementById('searchButton').addEventListener('click', performSearch);
+document.getElementById('searchField').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    performSearch();
+  }
+});
 
-  if (isNaN(lat) || isNaN(lng)) {
-    alert("Ogiltiga koordinater.");
+function performSearch() {
+  const query = document.getElementById('searchField').value.trim();
+  if (query === "") {
+    alert("Ange ett sökord eller koordinater.");
     return;
   }
-  map.setView([lat, lng], 10);
-  showAllInfo(lat, lng);
-});
-
-// Platssök (Sverige, limit=10, prioriterar by/stad)
-document.getElementById('searchPlaceButton').addEventListener('click', function() {
-  searchPlace();
-});
-
-// ENTER i platsfältet
-document.getElementById('placeName').addEventListener('keydown', function(event) {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    searchPlace();
+  
+  // Försök dela upp inmatningen med komma eller mellanslag
+  const parts = query.split(/[,\s]+/);
+  
+  // Om det finns minst två delar och båda kan tolkas som nummer: anta koordinater
+  if (parts.length >= 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1]))) {
+    const lat = parseFloat(parts[0]);
+    const lng = parseFloat(parts[1]);
+    map.setView([lat, lng], 10);
+    showAllInfo(lat, lng);
+    // Töm resultatslistan
+    document.getElementById('results').innerHTML = "";
+  } else {
+    // Annars, kör plats-sökning
+    searchPlace(query);
   }
-});
+}
 
-// Klick på Sök-knappen
-document.getElementById('searchPlaceButton').addEventListener('click', function() {
-  searchPlace();
-});
-
-// Nya searchPlace som visar upp till 10 träffar i en lista
-function searchPlace() {
-  const query = document.getElementById('placeName').value.trim();
+function searchPlace(queryParam) {
+  const query = queryParam || document.getElementById('searchField').value.trim();
   const resultsContainer = document.getElementById('results');
-
   resultsContainer.innerHTML = "";
 
   if (query === "") {
@@ -327,7 +434,6 @@ function searchPlace() {
     return;
   }
 
-  // Hämtar upp till 10 resultat
   fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=SE&limit=10&addressdetails=1`)
     .then(response => response.json())
     .then(data => {
@@ -336,41 +442,33 @@ function searchPlace() {
         return;
       }
 
-      // Skapa en lista av träffar
+      // Skapa en lista med träffar
       const ul = document.createElement('ul');
       ul.classList.add("search-results-list");
 
       data.forEach(result => {
         const li = document.createElement('li');
-        // Exempel: ta bort \", Sverige\" i slutet
         const displayName = result.display_name.replace(/, Sverige$/, "");
         li.textContent = displayName;
         li.addEventListener('click', () => {
-          document.getElementById('placeName').value = displayName;
+          document.getElementById('searchField').value = displayName;
           resultsContainer.innerHTML = "";
-
           const lat = parseFloat(result.lat);
-          const lon = parseFloat(result.lon);
-          map.setView([lat, lon], 10);
-          showAllInfo(lat, lon);
+          const lng = parseFloat(result.lon);
+          map.setView([lat, lng], 10);
+          showAllInfo(lat, lng);
         });
         ul.appendChild(li);
       });
 
       resultsContainer.appendChild(ul);
 
-      // **Beräkna var #results ska ligga i förhållande till #placeName**
-      const placeNameInput = document.getElementById('placeName');
-      const rect = placeNameInput.getBoundingClientRect();
-
-      // Låt #results matcha input-bredden
+      // Justera position för resultatslistan
+      const searchInput = document.getElementById('searchField');
+      const rect = searchInput.getBoundingClientRect();
       resultsContainer.style.width = rect.width + "px";
-
-      // Placera listan precis under input (samma left)
-      // Eftersom #place-search har position: relative
-      const topPos = placeNameInput.offsetTop + placeNameInput.offsetHeight; 
-      const leftPos = placeNameInput.offsetLeft; 
-      
+      const topPos = searchInput.offsetTop + searchInput.offsetHeight;
+      const leftPos = searchInput.offsetLeft;
       resultsContainer.style.top = topPos + "px";
       resultsContainer.style.left = leftPos + "px";
     })
@@ -380,18 +478,17 @@ function searchPlace() {
     });
 }
 
-// Dölj sökresultaten om användaren klickar utanför listan
+// Dölj resultatslistan om användaren klickar utanför sökfältet
 document.addEventListener('click', function(event) {
   const resultsContainer = document.getElementById('results');
-  const placeInput = document.getElementById('placeName');
-
-  // Om klicket INTE är inom plats-input eller resultatlistan -> rensa listan
-  if (!resultsContainer.contains(event.target) && !placeInput.contains(event.target)) {
+  const searchInput = document.getElementById('searchField');
+  if (!resultsContainer.contains(event.target) && !searchInput.contains(event.target)) {
     resultsContainer.innerHTML = "";
   }
 });
 
-// 🛠️ Definiera projektionerna korrekt för RT90, SWEREF99 TM och WGS84
+
+// 🛠️ Definiera projektionerna för RT90, SWEREF99 TM och WGS84
 proj4.defs([
   ["EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs"], // WGS84
   ["EPSG:3006", "+proj=utm +zone=33 +ellps=GRS80 +datum=WGS84 +units=m +no_defs"], // SWEREF 99 TM
@@ -406,34 +503,39 @@ document.getElementById("convertButton").addEventListener("click", function() {
   let rt90, sweref, wgs84;
 
   if (rt90Input) {
-      let [y, x] = rt90Input.split(",").map(Number); // (N, E) → (Y, X) format
-      wgs84 = proj4("EPSG:3847", "EPSG:4326", [x, y]);  // RT90 → WGS84 direkt
-      sweref = proj4("EPSG:4326", "EPSG:3006", wgs84);   // WGS84 → SWEREF99
+    let [y, x] = rt90Input.split(",").map(Number);
+    wgs84 = proj4("EPSG:3847", "EPSG:4326", [x, y]);  // RT90 → WGS84
+    sweref = proj4("EPSG:4326", "EPSG:3006", wgs84);  // WGS84 → SWEREF99
   } 
   else if (swerefInput) {
-      let [y, x] = swerefInput.split(",").map(Number); // (N, E) → (Y, X) format
-      wgs84 = proj4("EPSG:3006", "EPSG:4326", [x, y]);  // SWEREF99 → WGS84
-      rt90 = proj4("EPSG:4326", "EPSG:3847", wgs84);    // WGS84 → RT90
+    let [y, x] = swerefInput.split(",").map(Number);
+    wgs84 = proj4("EPSG:3006", "EPSG:4326", [x, y]);  // SWEREF99 → WGS84
+    rt90 = proj4("EPSG:4326", "EPSG:3847", wgs84);    // WGS84 → RT90
   } 
   else if (wgs84Input) {
-      let [lat, lon] = wgs84Input.split(",").map(Number);
-      rt90 = proj4("EPSG:4326", "EPSG:3847", [lon, lat]); // WGS84 → RT90
-      sweref = proj4("EPSG:4326", "EPSG:3006", [lon, lat]); // WGS84 → SWEREF99
+    let [lat, lon] = wgs84Input.split(",").map(Number);
+    rt90 = proj4("EPSG:4326", "EPSG:3847", [lon, lat]);   // WGS84 → RT90
+    sweref = proj4("EPSG:4326", "EPSG:3006", [lon, lat]); // WGS84 → SWEREF99
+    wgs84 = [lon, lat]; // Bara för att visa i result
   } else {
-      alert("Ange minst en koordinat för att konvertera.");
-      return;
+    alert("Ange minst en koordinat för att konvertera.");
+    return;
   }
 
-  // ✅ Fixat ordningen på WGS84 (Nu: Lat, Lon)
-  document.getElementById("wgs84Result").textContent = wgs84 ? `${wgs84[1].toFixed(5)}, ${wgs84[0].toFixed(5)}` : "-";
+  document.getElementById("wgs84Result").textContent = wgs84
+    ? `${wgs84[1].toFixed(5)}, ${wgs84[0].toFixed(5)}`
+    : "-";
 
-  // ✅ Fixat RT90 & SWEREF ordning och rundat av till heltal
-  document.getElementById("rt90Result").textContent = rt90 ? `${Math.round(rt90[1])}, ${Math.round(rt90[0])}` : "-";
-  document.getElementById("swerefResult").textContent = sweref ? `${Math.round(sweref[1])}, ${Math.round(sweref[0])}` : "-";
+  document.getElementById("rt90Result").textContent = rt90
+    ? `${Math.round(rt90[1])}, ${Math.round(rt90[0])}`
+    : "-";
+
+  document.getElementById("swerefResult").textContent = sweref
+    ? `${Math.round(sweref[1])}, ${Math.round(sweref[0])}`
+    : "-";
 });
 
-//Tabbar
-
+// Tabbar
 document.addEventListener("DOMContentLoaded", function () {
   openTab('main'); // Visa huvudfliken från start
 });
@@ -441,7 +543,7 @@ document.addEventListener("DOMContentLoaded", function () {
 function openTab(tabId) {
   // Dölj alla tabbar
   document.querySelectorAll(".tab-content").forEach(tab => {
-      tab.style.display = "none";
+    tab.style.display = "none";
   });
 
   // Visa den valda tabben
@@ -450,9 +552,8 @@ function openTab(tabId) {
 
   // Om kartan finns i en flik, uppdatera den
   if (tabId === "main" && typeof map !== "undefined") {
-      setTimeout(() => {
-          map.invalidateSize();
-      }, 300);
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 300);
   }
 }
-
