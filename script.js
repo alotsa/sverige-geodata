@@ -205,7 +205,7 @@ var topowebb = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/topowebb/?'
     layers: ['topowebbkartan'],
     format: 'image/png',
     transparent: true,
-    opacity: 0.75,
+    opacity: 1,
     maxZoom: 17,
     maxNativeZoom: 17
   }),
@@ -268,6 +268,7 @@ L.control.scale().addTo(map);
 setTimeout(() => {
   map.invalidateSize();
 }, 500);
+
 
 /**
  * 7) Funktion för GeoJSON-lager
@@ -391,7 +392,20 @@ map.on('click', function(e) {
   showAllInfo(lat, lng);
 });
 
-// Kombinerad sökfunktion (platssök & koordinatsök)
+// Debounce helper to reduce API calls
+function debounce(func, delay) {
+  let debounceTimer;
+  return function() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => func.apply(this, arguments), delay);
+  };
+}
+
+// Improved combined search with multiple markers, zoom-to-fit, clearing pins, and worldwide search toggle
+let currentMarkersGroup;
+
+// Event listeners for search field and buttons
+document.getElementById('searchField').addEventListener('input', debounce(handleAutocomplete, 300));
 document.getElementById('searchButton').addEventListener('click', performSearch);
 document.getElementById('searchField').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
@@ -400,55 +414,34 @@ document.getElementById('searchField').addEventListener('keydown', function(e) {
   }
 });
 
-function performSearch() {
+// Autocomplete functionality
+function handleAutocomplete() {
   const query = document.getElementById('searchField').value.trim();
-  if (query === "") {
-    alert("Ange ett sökord eller koordinater.");
-    return;
-  }
-  
-  // Försök dela upp inmatningen med komma eller mellanslag
-  const parts = query.split(/[,\s]+/);
-  
-  // Om det finns minst två delar och båda kan tolkas som nummer: anta koordinater
-  if (parts.length >= 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1]))) {
-    const lat = parseFloat(parts[0]);
-    const lng = parseFloat(parts[1]);
-    map.setView([lat, lng], 10);
-    showAllInfo(lat, lng);
-    // Töm resultatslistan
-    document.getElementById('results').innerHTML = "";
-  } else {
-    // Annars, kör plats-sökning
-    searchPlace(query);
-  }
-}
-
-function searchPlace(queryParam) {
-  const query = queryParam || document.getElementById('searchField').value.trim();
   const resultsContainer = document.getElementById('results');
-  resultsContainer.innerHTML = "";
+  const worldwideSearch = document.getElementById('worldwideToggle').checked;
 
-  if (query === "") {
-    alert("Ange ett platsnamn att söka efter.");
+  if (query.length < 3) {
+    resultsContainer.innerHTML = "";
     return;
   }
 
-  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=SE&limit=10&addressdetails=1`)
+  // Choose API URL based on the toggle (Sweden or worldwide)
+  const apiURL = worldwideSearch
+    ? `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=50`
+    : `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=SE&limit=50`;
+
+  fetch(apiURL)
     .then(response => response.json())
     .then(data => {
-      if (!data || data.length === 0) {
-        resultsContainer.innerHTML = "<div class='no-results'>Inga resultat hittades.</div>";
-        return;
-      }
+      resultsContainer.innerHTML = "";
+      if (data.length === 0) return;
 
-      // Skapa en lista med träffar
       const ul = document.createElement('ul');
       ul.classList.add("search-results-list");
 
       data.forEach(result => {
         const li = document.createElement('li');
-        const displayName = result.display_name.replace(/, Sverige$/, "");
+        const displayName = worldwideSearch ? result.display_name : result.display_name.replace(/, Sverige$/, "");
         li.textContent = displayName;
         li.addEventListener('click', () => {
           document.getElementById('searchField').value = displayName;
@@ -460,26 +453,77 @@ function searchPlace(queryParam) {
         });
         ul.appendChild(li);
       });
-
       resultsContainer.appendChild(ul);
 
-      // Justera position för resultatslistan
       const searchInput = document.getElementById('searchField');
       const rect = searchInput.getBoundingClientRect();
+      resultsContainer.style.position = 'absolute';
       resultsContainer.style.width = rect.width + "px";
-      const topPos = searchInput.offsetTop + searchInput.offsetHeight;
-      const leftPos = searchInput.offsetLeft;
-      resultsContainer.style.top = topPos + "px";
-      resultsContainer.style.left = leftPos + "px";
+      resultsContainer.style.top = (rect.bottom + window.scrollY) + "px";
+      resultsContainer.style.left = (rect.left + window.scrollX) + "px";
+      resultsContainer.style.zIndex = "5000";
     })
-    .catch(error => {
-      console.error("Fel vid plats-sökning:", error);
-      alert("Ett fel uppstod vid sökningen.");
-    });
+    .catch(console.error);
 }
 
-// Dölj resultatslistan om användaren klickar utanför sökfältet
-document.addEventListener('click', function(event) {
+// Search functionality (coordinates or place names)
+function performSearch() {
+  const query = document.getElementById('searchField').value.trim();
+  const worldwideSearch = document.getElementById('worldwideToggle').checked;
+
+  if (query === "") {
+    alert("Ange ett sökord eller koordinater.");
+    return;
+  }
+
+  if (currentMarkersGroup) {
+    map.removeLayer(currentMarkersGroup);
+    currentMarkersGroup = null;
+  }
+
+  const parts = query.split(/[ ,]+/);
+
+  if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    // Coordinate search
+    const lat = parseFloat(parts[0]);
+    const lng = parseFloat(parts[1]);
+    map.setView([lat, lng], 10);
+    showAllInfo(lat, lng);
+    document.getElementById('results').innerHTML = "";
+  } else {
+    // Place name search (Sweden or worldwide based on toggle)
+    const apiURL = worldwideSearch
+      ? `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=50`
+      : `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=SE&limit=50`;
+
+    fetch(apiURL)
+      .then(response => response.json())
+      .then(data => {
+        if (data.length === 0) {
+          alert("Inga resultat hittades.");
+          return;
+        }
+
+        currentMarkersGroup = L.featureGroup();
+
+        data.forEach(result => {
+          const lat = parseFloat(result.lat);
+          const lng = parseFloat(result.lon);
+          const marker = L.marker([lat, lng]).addTo(currentMarkersGroup);
+          marker.on('click', () => showAllInfo(lat, lng));
+        });
+
+        currentMarkersGroup.addTo(map);
+        map.fitBounds(currentMarkersGroup.getBounds());
+      })
+      .catch(console.error);
+
+    document.getElementById('results').innerHTML = "";
+  }
+}
+
+// Hide results when clicking outside
+document.addEventListener('click', (event) => {
   const resultsContainer = document.getElementById('results');
   const searchInput = document.getElementById('searchField');
   if (!resultsContainer.contains(event.target) && !searchInput.contains(event.target)) {
@@ -487,6 +531,15 @@ document.addEventListener('click', function(event) {
   }
 });
 
+// Clear pins from map
+document.getElementById('clearPinsButton').addEventListener('click', function() {
+  if (currentMarkersGroup) {
+    map.removeLayer(currentMarkersGroup);
+    currentMarkersGroup = null;
+  }
+});
+
+// Koordinatkonvertering
 
 // 🛠️ Definiera projektionerna för RT90, SWEREF99 TM och WGS84
 proj4.defs([

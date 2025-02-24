@@ -67,11 +67,15 @@ main {
   height: 60vh !important; /* Justera för mobil, så att annat innehåll syns */
   max-height: 90vh;
   margin-bottom: 20px;
+  margin-top: 5px;
 }
 
 /* Fixar bakgrund och tile-kanter i Leaflet */
 .leaflet-container {
   background-color: #d9e3e4 !important;
+}
+.leaflet-control-container {
+  z-index: 500 !important; /* Reduce Leaflet controls z-index */
 }
 .leaflet-tile {
   border: none !important;
@@ -114,11 +118,12 @@ h2, h3 {
   font-family: 'Quicksand', sans-serif;
   font-weight: 500;
   color: #051d35;
-  margin: 5px 0;
+  margin-top: 0px;
+  margin-bottom: 5px;
 }
 
 h2 {
-  font-size: 1.5em;
+  font-size: 1.4em;
 }
 
 h3 {
@@ -195,7 +200,7 @@ input[type="file"] {
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
-  flex-direction: row !important;
+  flex-direction: row;
 }
 
 input[type="text"],
@@ -218,6 +223,34 @@ input[type="text"] {
 input[type="text"]:focus {
   border-color: #0052aa;
   box-shadow: 0px 0px 6px rgba(0, 82, 170, 0.5);
+}
+
+/* Responsiv sökfält och knappar (mobilvänligt) */
+@media (max-width: 480px) {
+  #search, #place-search {
+    flex-direction: column;
+    align-items: stretch; /* Anpassa bredden automatiskt */
+  }
+
+  #search input[type="text"],
+  #search button,
+  #place-search input[type="text"],
+  #place-search button {
+    width: 100%;
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    margin-bottom: 5px;
+  }
+
+  #worldwideToggle {
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+
+  #results {
+    max-width: 100% !important;
+    font-size: 0.9rem;
+  }
 }
 
 /* ======= TABB-KNAPPAR ======= */
@@ -344,6 +377,7 @@ input[type="text"]:focus {
 /* ======= RESULTATLISTA FRÅN SÖK ======= */
 #place-search {
   position: relative;
+  z-index: 5000 !important;
 }
 
 #results {
@@ -354,7 +388,7 @@ input[type="text"]:focus {
   border: 1px solid #ccc;
   border-radius: 5px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  z-index: 5000;
 }
 
 #results ul {

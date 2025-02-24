@@ -36,17 +36,22 @@
         <main class="container">
           <!-- Rubriker -->
           <h2>Hitta platsens län, kommun, landskap och lappmark</h2>
-          <p>Använd sökfunktionen eller klicka direkt i kartan. OBS: platsnamn i kartan syns bäst i Chrome.</p>
           
           <!-- 🔍 Kombinerad sökning efter plats eller koordinater -->
           <section id="search-section">
             <div id="search">
               <input id="searchField" type="text" placeholder="Sök plats eller lat, lon (WGS84)" />
               <button id="searchButton">Sök</button>
+              <button id="clearPinsButton">Rensa pins</button>
+              <label>          
               <!-- Visar resultatlista från plats-sökning -->
               <div id="results"></div>
             </div>
           </section>
+
+          <input type="checkbox" id="worldwideToggle">
+          Bocka i för att tillåta sökträffar utanför Sverige
+        </label>    
           
           <!-- 🗺️ Karta -->
           <section id="map-section">
@@ -63,7 +68,7 @@
                 <li>Mata in latitud och longitud (WGS84 dec) för att söka på koordinater, t.ex. 56.1234, 14.2465</li>
                 <li>För att hitta länsvägar (LV), sök på <a href="https://sv.wikipedia.org/wiki/L%C3%A4nsbokstav" target="_blank" rel="noopener noreferrer">länsbokstav</a> + vägnummer, t.ex. AB 1035</li>
                 <li>Riksvägar (RV) inleds inte med någon bokstav</li>
-                <li>Listan med förslag som visas efter en sökning är begränsad till 10 träffar</li>
+                <li>Listan med förslag som visas efter en sökning är begränsad till 50 träffar</li>
                 <li>Platssök visar endast träffar i Sverige</li>
               </ul>
             </details>
