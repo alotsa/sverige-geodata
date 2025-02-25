@@ -40,10 +40,12 @@
           <!-- 🔍 Kombinerad sökning efter plats eller koordinater -->
           <section id="search-section">
             <div id="search">
-              <input id="searchField" type="text" placeholder="Sök plats eller lat, lon (WGS84)" />
+              <input id="searchField" type="text" placeholder="Sök plats eller lat, lon (WGS84)" 
+              title="Format som stöds är WGS84, RT90, och SWEREF99 TM. Se söktips längre ned.">       
               <button id="searchButton">Sök</button>
               <button id="clearPinsButton">Rensa pins</button>
-              <label>          
+              <label>     
+       
               <!-- Visar resultatlista från plats-sökning -->
               <div id="results"></div>
             </div>
@@ -65,7 +67,7 @@
               <summary>Klicka för att visa</summary>
               <ul>
                 <li>Du kan söka på ortnamn, sjöar, bäckar, vägnummer, trafikplatser, byggnader, restauranger m.m.</li>
-                <li>Mata in latitud och longitud (WGS84 dec) för att söka på koordinater, t.ex. 56.1234, 14.2465</li>
+                <li>Koordinatsystem som stöds är WGS84 dec, RT90 och SWEREF99</li>
                 <li>För att hitta länsvägar (LV), sök på <a href="https://sv.wikipedia.org/wiki/L%C3%A4nsbokstav" target="_blank" rel="noopener noreferrer">länsbokstav</a> + vägnummer, t.ex. AB 1035</li>
                 <li>Riksvägar (RV) inleds inte med någon bokstav</li>
                 <li>Listan med förslag som visas efter en sökning är begränsad till 50 träffar</li>

@@ -308,6 +308,24 @@ function addGeoJsonLayer(url, layerName) {
     .catch(err => console.error(`Error loading ${layerName}:`, err));
 }
 
+// Create a Leaflet control to display coordinates
+const coordinateDisplay = L.control({ position: "bottomleft" });
+
+coordinateDisplay.onAdd = function(map) {
+  const div = L.DomUtil.create("div", "coordinate-display");
+  div.innerHTML = "Lat: --, Lon: --";
+  return div;
+};
+
+// Add the coordinate display to the map
+coordinateDisplay.addTo(map);
+
+// Update coordinates dynamically when the mouse moves over the map
+map.on("mousemove", function(e) {
+  document.querySelector(".coordinate-display").innerHTML = 
+    `Lat: ${e.latlng.lat.toFixed(5)}, Lon: ${e.latlng.lng.toFixed(5)}`;
+});
+
 // Anropa GeoJSON-lagerinladdning om du vill
 addGeoJsonLayer('data/kommun.geojson', "Kommun");
 addGeoJsonLayer('data/lan.geojson', "Län");
@@ -466,7 +484,19 @@ function handleAutocomplete() {
     .catch(console.error);
 }
 
-// Search functionality (coordinates or place names)
+function isLikelyWGS84(coords) {
+  return coords[0] > 50 && coords[0] < 70 && coords[1] > 5 && coords[1] < 30;
+}
+
+function isLikelyRT90(coords) {
+  return coords[0] > 6000000 && coords[0] < 7000000 && coords[1] > 1200000 && coords[1] < 1900000;
+}
+
+function isLikelySWEREF99(coords) {
+  return coords[0] > 6100000 && coords[0] < 7750000 && coords[1] > 250000 && coords[1] < 950000;
+}
+
+
 function performSearch() {
   const query = document.getElementById('searchField').value.trim();
   const worldwideSearch = document.getElementById('worldwideToggle').checked;
@@ -481,17 +511,31 @@ function performSearch() {
     currentMarkersGroup = null;
   }
 
-  const parts = query.split(/[ ,]+/);
+  const parts = query.split(/[ ,]+/).map(num => parseFloat(num));
 
-  if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-    // Coordinate search
-    const lat = parseFloat(parts[0]);
-    const lng = parseFloat(parts[1]);
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    let lat, lng;
+
+    if (isLikelyWGS84(parts)) {
+      // Directly use WGS84 (lat, lon)
+      lat = parts[0];
+      lng = parts[1];
+    } else if (isLikelyRT90(parts)) {
+      // Convert RT90 to WGS84
+      [lng, lat] = proj4("EPSG:3847", "EPSG:4326", [parts[1], parts[0]]);
+    } else if (isLikelySWEREF99(parts)) {
+      // Convert SWEREF 99 TM to WGS84
+      [lng, lat] = proj4("EPSG:3006", "EPSG:4326", [parts[1], parts[0]]);
+    } else {
+      alert("Okänd koordinatformat. Ange WGS84, RT90 eller SWEREF 99 TM.");
+      return;
+    }
+
     map.setView([lat, lng], 10);
     showAllInfo(lat, lng);
     document.getElementById('results').innerHTML = "";
   } else {
-    // Place name search (Sweden or worldwide based on toggle)
+    // Perform place name search (Sweden or worldwide)
     const apiURL = worldwideSearch
       ? `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=50`
       : `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=SE&limit=50`;
@@ -521,6 +565,7 @@ function performSearch() {
     document.getElementById('results').innerHTML = "";
   }
 }
+
 
 // Hide results when clicking outside
 document.addEventListener('click', (event) => {
