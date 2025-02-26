@@ -40,12 +40,12 @@
           <!-- 🔍 Kombinerad sökning efter plats eller koordinater -->
           <section id="search-section">
             <div id="search">
-              <input id="searchField" type="text" placeholder="Sök plats eller lat, lon (WGS84)" 
+              <input id="searchField" type="text" placeholder="Sök plats eller koordinat" 
               title="Format som stöds är WGS84, RT90, och SWEREF99 TM. Se söktips längre ned.">       
               <button id="searchButton">Sök</button>
               <button id="clearPinsButton">Rensa pins</button>
-              <label>     
-       
+              <label>
+      
               <!-- Visar resultatlista från plats-sökning -->
               <div id="results"></div>
             </div>
@@ -68,10 +68,11 @@
               <ul>
                 <li>Du kan söka på ortnamn, sjöar, bäckar, vägnummer, trafikplatser, byggnader, restauranger m.m.</li>
                 <li>Koordinatsystem som stöds är WGS84 dec, RT90 och SWEREF99</li>
+                <li>Sök på socken genom att skriva t.ex. 'Hilleshög socken'.</li>
+                <li>Socken-lagret behöver vara tänt för att det ska synas i pop up-rutan vilken socken en plas tillhör</li>
                 <li>För att hitta länsvägar (LV), sök på <a href="https://sv.wikipedia.org/wiki/L%C3%A4nsbokstav" target="_blank" rel="noopener noreferrer">länsbokstav</a> + vägnummer, t.ex. AB 1035</li>
                 <li>Riksvägar (RV) inleds inte med någon bokstav</li>
                 <li>Listan med förslag som visas efter en sökning är begränsad till 50 träffar</li>
-                <li>Platssök visar endast träffar i Sverige</li>
               </ul>
             </details>
           </section>
@@ -167,7 +168,7 @@
               <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver)</li>
               <li>Koordinaterna ska vara i WGS84</li>
               <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>)</li>
-              <li>När du hämtar geodata baseras län och kommun på data från Lantmäteriet, inte OpenStreetMap</li>
+              <li>När du hämtar geodata baseras län, kommun och landskap på data från Lantmäteriet, inte OpenStreetMap</li>
             </ul>
           </section>
         </main>

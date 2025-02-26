@@ -1,0 +1,18 @@
+/****************************************************
+ * ATT GÖRA / IDÉLISTA
+ ****************************************************/
+
+Uppdaterad 2025-02-26
+
+Kontrollera kommun- och länsgränser - just nu 'trubbiga' - har jag verkligen Lantmäteriets original?
+- Jämför mina nuvarande filer med nedladdade filer från Lantmäteriet i Qgis.
+
+Lägga in möjlighet att söka i ortnamnsregistret.
+- Hur integrera i befintlig sökfunktion/sökfält utan att krångla till det för användaren? Kanske börja med att utveckla det separat på egen sida?
+- Om sökträff har koordinat --> gå till plats i kartan
+- Om sökträff saknar koordinat --> ???
+- Se dokumentation och API här: https://placenameservice.isof.se/
+- Se ortnamnsregistrets sökfunktion här: https://ortnamnsregistret.isof.se/place-names
+
+Se över struktur och kommenterande text.
+
