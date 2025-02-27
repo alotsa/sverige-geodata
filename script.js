@@ -168,7 +168,7 @@ function addGeoJsonLayer(url, layerName, visible = true) {
           styleObj = { color: "purple", weight: 1, fillColor: "purple", fillOpacity: 0 };
           break;
         case "Socknar":
-          styleObj = { color: "orange", weight: 2, fillColor: "none", fillOpacity: 0 };
+          styleObj = { color: "black", weight: 2, fillColor: "none", fillOpacity: 0 };
           break;
       }
 
@@ -301,6 +301,15 @@ async function showAllInfo(lat, lng) {
     console.error("Fel vid showAllInfo():", error);
   }
 }
+
+// Close the popup when clicking outside the map
+document.addEventListener("click", function(event) {
+  const mapContainer = document.getElementById("map"); // Adjust if your map has a different ID
+  if (!mapContainer.contains(event.target)) {
+    map.closePopup();
+  }
+});
+
 
 /****************************************************
  * KARTKLICK OCH SÖKFUNKTIONER
@@ -467,6 +476,7 @@ function performSearch() {
     showAllInfo(lat, lng);
     document.getElementById('results').innerHTML = "";
   } else {
+    
     // API-anrop för att söka efter platsnamn via OpenStreetMap
     const apiURL = worldwideSearch
       ? `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=50`
@@ -623,7 +633,7 @@ function convertCoordinates() {
 }
 
 /****************************************************
- * HÄMTA GEODATA FRÅN EXCEL OCH BEARBETA
+ * HÄMTA GEODATA (BULK)
  ****************************************************/
 
 /**
@@ -673,41 +683,69 @@ document.getElementById("excelFile").addEventListener("change", function (e) {
 
 /**
  * Bearbetar varje rad i den inlästa Excel-filen och kopplar koordinater till geografiska områden.
+ * Hämtar även land och adress från Nominatim API.
+ * 
  * @param {Array} rows - Lista med objekt där varje objekt representerar en rad i Excel-filen.
  */
-function processRows(rows) {
+async function processRows(rows) {
   console.log("🔍 Startar bearbetning av rader...");
 
-  rows.forEach(row => {
+  for (let row of rows) {
     const lat = parseFloat(row.lat);
     const lon = parseFloat(row.lon);
     let manuellKontroll = "";
 
-    // Kontrollera om koordinaterna är giltiga och inom Sveriges gränser
     if (isNaN(lat) || isNaN(lon) || lat < 55 || lat > 70 || lon < 10 || lon > 25) {
       console.warn("⚠️ Ogiltiga koordinater i rad:", row);
       row.lan = "";
       row.kommun = "";
       row.landskap = "";
+      row.socken = "";
+      row.adress = "";
+      row.land = "";
       manuellKontroll = "Kontrollera koordinater (punkt utanför Sverige)";
     } else {
-      // Sök geografiska områden baserat på koordinater
+      // Hämta geografiska områden via polygoner
       row.lan = polygonLookup(lon, lat, geojsonLan, "lan") || "";
       row.kommun = polygonLookup(lon, lat, geojsonKommun, "kommun") || "";
       row.landskap = polygonLookup(lon, lat, geojsonLandskap, "Landskap-lappmark") || "";
+      row.socken = polygonLookup(lon, lat, geojsonSockenstad, "sockenstadnamn") || "";
 
-      // Markera för manuell kontroll om någon polygon saknas
       if (!row.lan || !row.kommun || !row.landskap) {
         manuellKontroll = "Ingen träff i polygondata";
+      }
+
+      // Hämta land och adress från Nominatim API
+      try {
+        const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+        const response = await fetch(nominatimUrl);
+        
+        if (!response.ok) throw new Error("Nominatim API-fel");
+
+        const data = await response.json();
+
+        // Spara landet
+        row.land = data.address.country || "Okänt land";
+
+        // Omvandla adress från mindre till större område
+        let fullAddress = data.display_name || "Okänd plats";
+        let sortedAddress = fullAddress.split(", ").reverse().join(", ");
+        row.adress = sortedAddress;
+
+      } catch (error) {
+        console.error("Fel vid hämtning av adress från Nominatim:", error);
+        row.adress = "N/A";
+        row.land = "N/A";
       }
     }
 
     row.manuell_kontroll = manuellKontroll;
-  });
+  }
 
   console.log("✅ Färdig med bearbetning. Rader:", rows);
   generateAndDownloadExcel(rows);
 }
+
 
 /**
  * Söker efter geografiska polygonträffar baserat på latitud och longitud
@@ -740,17 +778,48 @@ function polygonLookup(lon, lat, geojson, propertyName) {
  * @param {Array} rows - Lista med objekt som ska exporteras till Excel.
  */
 function generateAndDownloadExcel(rows) {
+  if (rows.length === 0) {
+    console.warn("🚨 Ingen data att exportera.");
+    return;
+  }
+
+  // Definiera den önskade kolumnordningen och rubriknamnen
+  const columnHeaders = [
+    "id", "lat", "lon", "land", "lan", "landskap", "kommun", "socken", "adress", "manuell_kontroll"
+  ];
+
+  // Omorganisera varje rad enligt den definierade ordningen
+  const orderedRows = rows.map((row, index) => {
+    let orderedRow = {};
+    orderedRow["id"] = index + 1; // Lägg till ett ID-fält, börjar från 1
+    columnHeaders.forEach(col => {
+      orderedRow[col] = row[col] || ""; // Fyll med tom sträng om värdet saknas
+    });
+    return orderedRow;
+  });
+
+  // Skapa en ny arbetsbok
   const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.json_to_sheet(rows);
 
-  // Skapa rubriker baserat på första raden i data
-  const headers = Object.keys(rows[0] || {});
-  const wsHeaders = XLSX.utils.aoa_to_sheet([headers]);
-  XLSX.utils.sheet_add_json(wsHeaders, rows, { origin: "A2", skipHeader: true });
+  // Skapa ett kalkylblad med data i rätt ordning
+  const worksheet = XLSX.utils.json_to_sheet(orderedRows, { header: columnHeaders });
 
-  XLSX.utils.book_append_sheet(workbook, wsHeaders, "Resultat");
+  // Lägg till "Resultat" som första blad
+  XLSX.utils.book_append_sheet(workbook, worksheet, "resultat");
 
-  // Skriv Excel-fil till en Blob
+  // Skapa informationsbladet "info"
+  const infoData = [
+    ["Info"],
+    [""],
+    ["Data i kolumnerna land och adress hämtas från OpenStreetMap via Nominatims geokodningstjänst."],
+    ["Kolumnerna län, landskap, kommun, och socken hämtas från lager nedladdade från Lantmäteriet år 2025."]
+  ];
+  const infoSheet = XLSX.utils.aoa_to_sheet(infoData);
+
+  // Lägg till "info" som andra blad
+  XLSX.utils.book_append_sheet(workbook, infoSheet, "info");
+
+  // Skriv arbetsboken till en Blob-fil
   const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
   const blob = new Blob([wbout], { type: "application/octet-stream" });
 
@@ -764,8 +833,7 @@ function generateAndDownloadExcel(rows) {
   document.body.removeChild(downloadLink);
   URL.revokeObjectURL(url);
 
-  console.log("✅ Excel-fil med geodata skapad och nedladdad!");
+  console.log("✅ Excel-fil med rätt kolumnordning och informationsblad skapad och nedladdad!");
 }
 
 
-// TEST

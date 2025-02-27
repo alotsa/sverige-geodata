@@ -41,7 +41,7 @@
           <section id="search-section">
             <div id="search">
               <input id="searchField" type="text" placeholder="Sök plats eller koordinat" 
-              title="Format som stöds är WGS84, RT90, och SWEREF99 TM. Se söktips längre ned.">       
+              title="Se söktips längre ned">       
               <button id="searchButton">Sök</button>
               <button id="clearPinsButton">Rensa pins</button>
               <label>
@@ -83,13 +83,14 @@
           <section id="data-sources">
             <h3>Datakällor</h3>
             <p>Bakgrundskartan kommer från OpenStreetMap. Information om adress, kommun och län hämtas via Nominatims geokodningstjänst.</p>
-            <p>Lagren som kan tändas och släckas i kartan baseras på:</p>
+            <p>Lagren som kan tändas och släckas i kartan kommer från:</p>
             <ul>
-              <li>Län: Lantmäteriets Sverigekartor</li>
-              <li>Kommun: Lantmäteriets Sverigekartor</li>
-              <li>Landskap: Lantmäteriets distriktsindelning</li>
+              <li>Län och kommun: Lantmäteriets öppna data 'Kommun, län och rike'</li>
+              <li>Landskap: Lantmäteriets öppna data 'Distriktsindelning'</li>
+              <li>Socken: Lantmäteriets öppna data 'Socken och stad'</li>
               <li>Lappmarkerna är avgränsade med hjälp av kommungränser</li>
             </ul>
+            <p>Dokumentation om respektive lager från Lantmäteriet finns på deras hemsida.</p>
             <p>Information om län och kommun kan skilja sig mellan OpenStreetMap/Nominatim och Lantmäteriets data, särskilt om punkten ligger mycket nära en gräns.</p>
           </section>
           <br>
@@ -125,7 +126,8 @@
           <!-- 📂 Hämta geodata från koordinater -->
           <section id="geo-instructions">
             <h2>Hämta geodata från koordinater</h2>
-            <p>Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplas till län, landskap (eller lappmark) och kommun.</p>
+            <p>Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplats till län, landskap (eller lappmark), kommun, socken och adress.</p>
+            <p>Adressen hämtas från OpenStreetMap. Övriga kolumner hämtar information från Lantmäteriet.</p>
             <ol>
               <li>Välj din Excel-fil</li>
               <li>Klicka på <strong>"Hämta geodata"</strong></li>
