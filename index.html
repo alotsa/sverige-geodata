@@ -44,16 +44,73 @@
               title="Se söktips längre ned">       
               <button id="searchButton">Sök</button>
               <button id="clearPinsButton">Rensa pins</button>
-              <label>
-      
               <!-- Visar resultatlista från plats-sökning -->
               <div id="results"></div>
             </div>
           </section>
 
-          <input type="checkbox" id="worldwideToggle">
-          Bocka i för att tillåta sökträffar utanför Sverige
-        </label>    
+          <!-- Avancerade sökfilter i ett utfällbart avsnitt -->
+          <details id="advancedSearchContainer">
+            <summary>Sökfilter</summary>
+            <div>
+              <input type="checkbox" id="worldwideToggle">
+              <label for="worldwideToggle">Tillåt sökträffar utanför Sverige</label>
+            </div>
+            <div id="filterContainer">
+              <select id="filterLan">
+                <option value="">Alla län</option>
+                <option value="Blekinge län">Blekinge län</option>
+                <option value="Dalarnas län">Dalarnas län</option>
+                <option value="Gotlands län">Gotlands län</option>
+                <option value="Gävleborgs län">Gävleborgs län</option>
+                <option value="Hallands län">Hallands län</option>
+                <option value="Jämtlands län">Jämtlands län</option>
+                <option value="Jönköpings län">Jönköpings län</option>
+                <option value="Kalmar län">Kalmar län</option>
+                <option value="Kronobergs län">Kronobergs län</option>
+                <option value="Norrbottens län">Norrbottens län</option>
+                <option value="Skåne län">Skåne län</option>
+                <option value="Stockholms län">Stockholms län</option>
+                <option value="Södermanlands län">Södermanlands län</option>
+                <option value="Uppsala län">Uppsala län</option>
+                <option value="Värmlands län">Värmlands län</option>
+                <option value="Västerbottens län">Västerbottens län</option>
+                <option value="Västernorrlands län">Västernorrlands län</option>
+                <option value="Västmanlands län">Västmanlands län</option>
+                <option value="Västra Götalands län">Västra Götalands län</option>
+                <option value="Örebro län">Örebro län</option>
+                <option value="Östergötlands län">Östergötlands län</option>
+              </select>
+              
+              <select id="filterLandskap">
+                <option value="">Alla landskap</option>
+                <option value="Blekinge">Blekinge</option>
+                <option value="Bohuslän">Bohuslän</option>
+                <option value="Dalarna">Dalarna</option>
+                <option value="Dalsland">Dalsland</option>
+                <option value="Gotland">Gotland</option>
+                <option value="Gästrikland">Gästrikland</option>
+                <option value="Halland">Halland</option>
+                <option value="Hälsingland">Hälsingland</option>
+                <option value="Härjedalen">Härjedalen</option>
+                <option value="Jämtland">Jämtland</option>
+                <option value="Medelpad">Medelpad</option>
+                <option value="Norrbotten">Norrbotten</option>
+                <option value="Närke">Närke</option>
+                <option value="Skåne">Skåne</option>
+                <option value="Småland">Småland</option>
+                <option value="Södermanland">Södermanland</option>
+                <option value="Uppland">Uppland</option>
+                <option value="Värmland">Värmland</option>
+                <option value="Västerbotten">Västerbotten</option>
+                <option value="Västergötland">Västergötland</option>
+                <option value="Västmanland">Västmanland</option>
+                <option value="Ångermanland">Ångermanland</option>
+                <option value="Öland">Öland</option>
+                <option value="Östergötland">Östergötland</option>                 
+              </select>
+            </div>
+          </details>
           
           <!-- 🗺️ Karta -->
           <section id="map-section">
@@ -69,7 +126,7 @@
                 <li>Du kan söka på ortnamn, sjöar, bäckar, vägnummer, trafikplatser, byggnader, restauranger m.m.</li>
                 <li>Koordinatsystem som stöds är WGS84 dec, RT90 och SWEREF99</li>
                 <li>Sök på socken genom att skriva t.ex. 'Hilleshög socken'.</li>
-                <li>Socken-lagret behöver vara tänt för att det ska synas i pop up-rutan vilken socken en plas tillhör</li>
+                <li>Socken-lagret behöver vara tänt för att det ska synas i pop up-rutan vilken socken en plats tillhör</li>
                 <li>För att hitta länsvägar (LV), sök på <a href="https://sv.wikipedia.org/wiki/L%C3%A4nsbokstav" target="_blank" rel="noopener noreferrer">länsbokstav</a> + vägnummer, t.ex. AB 1035</li>
                 <li>Riksvägar (RV) inleds inte med någon bokstav</li>
                 <li>Listan med förslag som visas efter en sökning är begränsad till 50 träffar</li>
@@ -127,12 +184,27 @@
           <section id="geo-instructions">
             <h2>Hämta geodata från koordinater</h2>
             <p>Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplats till län, landskap (eller lappmark), kommun, socken och adress.</p>
-            <p>Adressen hämtas från OpenStreetMap. Övriga kolumner hämtar information från Lantmäteriet.</p>
+            <p>Adressen hämtas från OpenStreetMap. Övrig data hämtas från Lantmäteriet.</p>
             <ol>
               <li>Välj din Excel-fil</li>
               <li>Klicka på <strong>"Hämta geodata"</strong></li>
               <li>Den bearbetade filen laddas ner automatiskt</li>
             </ol>
+
+            <!-- Välj datakälla -->
+            <div id="dataSourceSelector">
+              <label>
+                <input type="radio" name="dataSource" value="lmOnly">
+                Hämta endast län, kommun, landskap (snabbare)
+              </label>
+              <label>
+                <input type="radio" name="dataSource" value="both" checked>
+                Hämta fullständig data (inkluderar även socken, adress)
+              </label>
+            </div>
+
+            <br>
+
             <!-- Filuppladdning för Excel + knapp för att starta bearbetning -->
             <div id="excel-upload">
               <label for="excelFile" class="custom-file-upload">
@@ -170,7 +242,6 @@
               <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver)</li>
               <li>Koordinaterna ska vara i WGS84</li>
               <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>)</li>
-              <li>När du hämtar geodata baseras län, kommun och landskap på data från Lantmäteriet, inte OpenStreetMap</li>
             </ul>
           </section>
         </main>

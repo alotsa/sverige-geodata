@@ -375,13 +375,35 @@ function handleAutocomplete() {
   fetch(apiURL)
     .then(response => response.json())
     .then(data => {
+      // Hämta filtervärdena
+      const selectedLan = document.getElementById('filterLan').value;
+      const selectedLandskap = document.getElementById('filterLandskap').value;
+
+      // Filtrera resultaten med polygondata om filter är aktiva
+      const filteredData = data.filter(result => {
+        const lat = parseFloat(result.lat);
+        const lng = parseFloat(result.lon);
+        
+        // Om länfilter är valt: hämta län via polygonLookup
+        if (selectedLan) {
+          const resultLan = polygonLookup(lng, lat, geojsonLan, "lan");
+          if (resultLan !== selectedLan) return false;
+        }
+        // Om landskapsfilter är valt: hämta landskap via polygonLookup
+        if (selectedLandskap) {
+          const resultLandskap = polygonLookup(lng, lat, geojsonLandskap, "Landskap-lappmark");
+          if (resultLandskap !== selectedLandskap) return false;
+        }
+        return true;
+      });
+
       resultsContainer.innerHTML = "";
-      if (data.length === 0) return;
+      if (filteredData.length === 0) return;
 
       const ul = document.createElement('ul');
       ul.classList.add("search-results-list");
 
-      data.forEach(result => {
+      filteredData.forEach(result => {
         const li = document.createElement('li');
         const displayName = worldwideSearch ? result.display_name : result.display_name.replace(/, Sverige$/, "");
         li.textContent = displayName;
@@ -490,22 +512,49 @@ function performSearch() {
           return;
         }
 
-        currentMarkersGroup = L.featureGroup();
+// Hämta filtervärdena
+const selectedLan = document.getElementById('filterLan').value;
+const selectedLandskap = document.getElementById('filterLandskap').value;
 
-        data.forEach(result => {
-          const lat = parseFloat(result.lat);
-          const lng = parseFloat(result.lon);
-          const marker = L.marker([lat, lng]).addTo(currentMarkersGroup);
-          marker.on('click', () => showAllInfo(lat, lng));
-        });
-
-        currentMarkersGroup.addTo(map);
-        map.fitBounds(currentMarkersGroup.getBounds());
-      })
-      .catch(console.error);
-
-    document.getElementById('results').innerHTML = "";
+// Filtrera resultaten med polygondata om filter är aktiva
+const filteredData = data.filter(result => {
+  const lat = parseFloat(result.lat);
+  const lng = parseFloat(result.lon);
+  
+  // Om länfilter är valt: hämta län via polygonLookup
+  if (selectedLan) {
+    const resultLan = polygonLookup(lng, lat, geojsonLan, "lan");
+    if (resultLan !== selectedLan) return false;
   }
+  // Om landskapsfilter är valt: hämta landskap via polygonLookup
+  if (selectedLandskap) {
+    const resultLandskap = polygonLookup(lng, lat, geojsonLandskap, "Landskap-lappmark");
+    if (resultLandskap !== selectedLandskap) return false;
+  }
+  return true;
+});
+
+if (filteredData.length === 0) {
+  alert("Inga resultat hittades med de valda filtren.");
+  return;
+}
+
+currentMarkersGroup = L.featureGroup();
+
+filteredData.forEach(result => {
+  const lat = parseFloat(result.lat);
+  const lng = parseFloat(result.lon);
+  const marker = L.marker([lat, lng]).addTo(currentMarkersGroup);
+  marker.on('click', () => showAllInfo(lat, lng));
+});
+
+currentMarkersGroup.addTo(map);
+map.fitBounds(currentMarkersGroup.getBounds());
+})
+.catch(console.error);
+
+document.getElementById('results').innerHTML = "";
+}
 }
 
 /**
@@ -690,6 +739,9 @@ document.getElementById("excelFile").addEventListener("change", function (e) {
 async function processRows(rows) {
   console.log("🔍 Startar bearbetning av rader...");
 
+  // Hämta valt alternativ från radioknapparna
+  const dataSource = document.querySelector('input[name="dataSource"]:checked').value;
+
   for (let row of rows) {
     const lat = parseFloat(row.lat);
     const lon = parseFloat(row.lon);
@@ -705,7 +757,7 @@ async function processRows(rows) {
       row.land = "";
       manuellKontroll = "Kontrollera koordinater (punkt utanför Sverige)";
     } else {
-      // Hämta geografiska områden via polygoner
+      // Hämta geografiska områden via polygoner från Lantmäteriet
       row.lan = polygonLookup(lon, lat, geojsonLan, "lan") || "";
       row.kommun = polygonLookup(lon, lat, geojsonKommun, "kommun") || "";
       row.landskap = polygonLookup(lon, lat, geojsonLandskap, "Landskap-lappmark") || "";
@@ -715,27 +767,34 @@ async function processRows(rows) {
         manuellKontroll = "Ingen träff i polygondata";
       }
 
-      // Hämta land och adress från Nominatim API
-      try {
-        const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
-        const response = await fetch(nominatimUrl);
-        
-        if (!response.ok) throw new Error("Nominatim API-fel");
+      // Om användaren valt att hämta från båda källorna gör vi ett API-anrop mot Nominatim
+      if (dataSource === "both") {
+        try {
+          const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+          const response = await fetch(nominatimUrl);
+          
+          if (!response.ok) throw new Error("Nominatim API-fel");
 
-        const data = await response.json();
+          const data = await response.json();
 
-        // Spara landet
-        row.land = data.address.country || "Okänt land";
+          // Spara landet
+          row.land = data.address.country || "Okänt land";
 
-        // Omvandla adress från mindre till större område
-        let fullAddress = data.display_name || "Okänd plats";
-        let sortedAddress = fullAddress.split(", ").reverse().join(", ");
-        row.adress = sortedAddress;
+          // Omvandla adress från mindre till större område
+          let fullAddress = data.display_name || "Okänd plats";
+          let sortedAddress = fullAddress.split(", ").reverse().join(", ");
+          row.adress = sortedAddress;
 
-      } catch (error) {
-        console.error("Fel vid hämtning av adress från Nominatim:", error);
-        row.adress = "N/A";
-        row.land = "N/A";
+        } catch (error) {
+          console.error("Fel vid hämtning av adress från Nominatim:", error);
+          row.adress = "N/A";
+          row.land = "N/A";
+        }
+      } else {
+        // Om endast Lantmäteriets data ska användas
+        // Sätt eventuellt tomma värden eller ge ett standardmeddelande
+        row.adress = "Hämtas ej via Nominatim";
+        row.land = "Hämtas ej via Nominatim";
       }
     }
 
