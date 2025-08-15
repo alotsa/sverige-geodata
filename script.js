@@ -442,7 +442,7 @@ function isLikelyWGS84(coords) {
  * Kontrollerar om ett koordinatpar är i RT90-format.
  */
 function isLikelyRT90(coords) {
-  return coords[0] > 6000000 && coords[0] < 7000000 && coords[1] > 1200000 && coords[1] < 1900000;
+  return coords[0] > 6000000 && coords[0] < 7700000 && coords[1] > 1200000 && coords[1] < 1900000;
 }
 
 /**
