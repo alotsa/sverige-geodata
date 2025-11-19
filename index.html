@@ -3,266 +3,310 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>geoLocus</title>
-  <!-- Huvudstilarkälla -->
+  <title>geoLocus - Län, kommun och landskap i ett klick!</title>
+  
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
-  <!-- Google Fonts -->
+  
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
-  <!-- Leaflet CSS (för kartan) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <!-- Font Awesome för ikoner -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
-  <div class="wrapper">
-    <header id="header">
-      <div id="logo-container">
-        <img src="geoLocus_small.png" alt="geoLocus logotyp" id="logo">
-      </div>
-      <nav class="tab-wrapper">
-        <div class="tab-container">
-          <button class="tab-button" onclick="openTab('main')">Karta</button>
-          <button class="tab-button" onclick="openTab('converter')">Konvertera</button>
-          <button class="tab-button" onclick="openTab('hämta-geodata')">Hämta geodata</button>
+  <div class="app-container">
+    <!-- HEADER -->
+    <header>
+      <div class="header-content">
+        <div class="logo-section">
+          <div class="logo-placeholder">G</div>
+          <div class="brand-text">
+            <h1>geoLocus</h1>
+            <p>Län, kommun och landskap i ett klick!</p>
+          </div>
         </div>
-      </nav>
+        
+        <nav class="tab-nav">
+          <button class="tab-button active" onclick="openTab('main')">
+            Karta
+          </button>
+          <button class="tab-button" onclick="openTab('converter')">
+            Konvertera
+          </button>
+          <button class="tab-button" onclick="openTab('hämta-geodata')">
+            Hämta geodata
+          </button>
+        </nav>
+      </div>
     </header>
 
-    <!-- Innehållsomslag för alla flikar -->
-    <div class="content">
-      <div id="main" class="tab-content">
-        <main class="container">
-          <!-- Rubriker -->
-          <h2>Hitta platsens län, kommun, landskap och lappmark</h2>
+    <!-- MAIN CONTENT AREA -->
+    <div class="content-area">
+      
+      <!-- TAB 1: KARTA (Full-screen map) -->
+      <div id="main" class="tab-content active">
+        <div id="map-view">
+          <div id="map"></div>
           
-          <!-- 🔍 Kombinerad sökning efter plats eller koordinater -->
-          <section id="search-section">
-            <div id="search">
-              <input id="searchField" type="text" placeholder="Sök plats eller koordinat" 
-              title="Se söktips längre ned">       
-              <button id="searchButton">Sök</button>
-              <button id="clearPinsButton">Rensa pins</button>
-              <!-- Visar resultatlista från plats-sökning -->
-              <div id="results"></div>
-            </div>
-          </section>
-
-          <!-- Avancerade sökfilter i ett utfällbart avsnitt -->
-          <details id="advancedSearchContainer">
-            <summary>Sökfilter</summary>
-            <div>
-              <input type="checkbox" id="worldwideToggle">
-              <label for="worldwideToggle">Tillåt sökträffar utanför Sverige</label>
-            </div>
-            <div id="filterContainer">
-              <select id="filterLan">
-                <option value="">Alla län</option>
-                <option value="Blekinge län">Blekinge län</option>
-                <option value="Dalarnas län">Dalarnas län</option>
-                <option value="Gotlands län">Gotlands län</option>
-                <option value="Gävleborgs län">Gävleborgs län</option>
-                <option value="Hallands län">Hallands län</option>
-                <option value="Jämtlands län">Jämtlands län</option>
-                <option value="Jönköpings län">Jönköpings län</option>
-                <option value="Kalmar län">Kalmar län</option>
-                <option value="Kronobergs län">Kronobergs län</option>
-                <option value="Norrbottens län">Norrbottens län</option>
-                <option value="Skåne län">Skåne län</option>
-                <option value="Stockholms län">Stockholms län</option>
-                <option value="Södermanlands län">Södermanlands län</option>
-                <option value="Uppsala län">Uppsala län</option>
-                <option value="Värmlands län">Värmlands län</option>
-                <option value="Västerbottens län">Västerbottens län</option>
-                <option value="Västernorrlands län">Västernorrlands län</option>
-                <option value="Västmanlands län">Västmanlands län</option>
-                <option value="Västra Götalands län">Västra Götalands län</option>
-                <option value="Örebro län">Örebro län</option>
-                <option value="Östergötlands län">Östergötlands län</option>
-              </select>
+          <!-- Search controls overlaid on map - TOP LEFT -->
+          <div class="map-controls">
+            <div class="search-panel">
+              <div class="search-header">
+                <div class="search-row">
+                  <input id="searchField" type="text" placeholder="Sök plats eller koordinat...">
+                  <button id="searchButton">Sök</button>
+                </div>
+                <div class="button-row">
+                  <button id="clearPinsButton" class="secondary" style="width: 100%;">Rensa pins</button>
+                </div>
+              </div>
               
-              <select id="filterLandskap">
-                <option value="">Alla landskap</option>
-                <option value="Blekinge">Blekinge</option>
-                <option value="Bohuslän">Bohuslän</option>
-                <option value="Dalarna">Dalarna</option>
-                <option value="Dalsland">Dalsland</option>
-                <option value="Gotland">Gotland</option>
-                <option value="Gästrikland">Gästrikland</option>
-                <option value="Halland">Halland</option>
-                <option value="Hälsingland">Hälsingland</option>
-                <option value="Härjedalen">Härjedalen</option>
-                <option value="Jämtland">Jämtland</option>
-                <option value="Medelpad">Medelpad</option>
-                <option value="Norrbotten">Norrbotten</option>
-                <option value="Närke">Närke</option>
-                <option value="Skåne">Skåne</option>
-                <option value="Småland">Småland</option>
-                <option value="Södermanland">Södermanland</option>
-                <option value="Uppland">Uppland</option>
-                <option value="Värmland">Värmland</option>
-                <option value="Västerbotten">Västerbotten</option>
-                <option value="Västergötland">Västergötland</option>
-                <option value="Västmanland">Västmanland</option>
-                <option value="Ångermanland">Ångermanland</option>
-                <option value="Öland">Öland</option>
-                <option value="Östergötland">Östergötland</option>                 
-              </select>
+              <div id="results"></div>
+              
+              <!-- Filters -->
+              <div class="filters-panel">
+                <div class="filters-toggle" onclick="toggleFilters()">
+                  <span>Sökfilter</span>
+                  <span id="filter-arrow">▼</span>
+                </div>
+                <div class="filters-content" id="filters-content">
+                  <div class="filter-group">
+                    <label>
+                      <input type="checkbox" id="worldwideToggle">
+                      Tillåt sökträffar utanför Sverige
+                    </label>
+                  </div>
+                  
+                  <div class="filter-group">
+                    <select id="filterLan">
+                      <option value="">Alla län</option>
+                      <option value="Blekinge län">Blekinge län</option>
+                      <option value="Dalarnas län">Dalarnas län</option>
+                      <option value="Gotlands län">Gotlands län</option>
+                      <option value="Gävleborgs län">Gävleborgs län</option>
+                      <option value="Hallands län">Hallands län</option>
+                      <option value="Jämtlands län">Jämtlands län</option>
+                      <option value="Jönköpings län">Jönköpings län</option>
+                      <option value="Kalmar län">Kalmar län</option>
+                      <option value="Kronobergs län">Kronobergs län</option>
+                      <option value="Norrbottens län">Norrbottens län</option>
+                      <option value="Skåne län">Skåne län</option>
+                      <option value="Stockholms län">Stockholms län</option>
+                      <option value="Södermanlands län">Södermanlands län</option>
+                      <option value="Uppsala län">Uppsala län</option>
+                      <option value="Värmlands län">Värmlands län</option>
+                      <option value="Västerbottens län">Västerbottens län</option>
+                      <option value="Västernorrlands län">Västernorrlands län</option>
+                      <option value="Västmanlands län">Västmanlands län</option>
+                      <option value="Västra Götalands län">Västra Götalands län</option>
+                      <option value="Örebro län">Örebro län</option>
+                      <option value="Östergötlands län">Östergötlands län</option>
+                    </select>
+                    
+                    <select id="filterLandskap">
+                      <option value="">Alla landskap</option>
+                      <option value="Blekinge">Blekinge</option>
+                      <option value="Bohuslän">Bohuslän</option>
+                      <option value="Dalarna">Dalarna</option>
+                      <option value="Dalsland">Dalsland</option>
+                      <option value="Gotland">Gotland</option>
+                      <option value="Gästrikland">Gästrikland</option>
+                      <option value="Halland">Halland</option>
+                      <option value="Hälsingland">Hälsingland</option>
+                      <option value="Härjedalen">Härjedalen</option>
+                      <option value="Jämtland">Jämtland</option>
+                      <option value="Medelpad">Medelpad</option>
+                      <option value="Norrbotten">Norrbotten</option>
+                      <option value="Närke">Närke</option>
+                      <option value="Skåne">Skåne</option>
+                      <option value="Småland">Småland</option>
+                      <option value="Södermanland">Södermanland</option>
+                      <option value="Uppland">Uppland</option>
+                      <option value="Värmland">Värmland</option>
+                      <option value="Västerbotten">Västerbotten</option>
+                      <option value="Västergötland">Västergötland</option>
+                      <option value="Västmanland">Västmanland</option>
+                      <option value="Ångermanland">Ångermanland</option>
+                      <option value="Öland">Öland</option>
+                      <option value="Östergötland">Östergötland</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
-          </details>
-          
-          <!-- 🗺️ Karta -->
-          <section id="map-section">
-            <div id="map"></div>
-          </section>
-          
-          <!-- ℹ️ Söktips -->
-          <section id="search-tips">
-            <h3>Söktips</h3>
-            <details>
-              <summary>Klicka för att visa</summary>
-              <ul>
-                <li>Du kan söka på ortnamn, sjöar, bäckar, vägnummer, trafikplatser, byggnader, restauranger m.m.</li>
-                <li>Koordinatsystem som stöds är WGS84 dec, RT90 och SWEREF99</li>
-                <li>Sök på socken genom att skriva t.ex. 'Hilleshög socken'.</li>
-                <li>Socken-lagret behöver vara tänt för att det ska synas i pop up-rutan vilken socken en plats tillhör</li>
-                <li>För att hitta länsvägar (LV), sök på <a href="https://sv.wikipedia.org/wiki/L%C3%A4nsbokstav" target="_blank" rel="noopener noreferrer">länsbokstav</a> + vägnummer, t.ex. AB 1035</li>
-                <li>Riksvägar (RV) inleds inte med någon bokstav</li>
-                <li>Listan med förslag som visas efter en sökning är begränsad till 50 träffar</li>
-              </ul>
-            </details>
-          </section>
-          
-          <br>
-          
-          <!-- ℹ️ Datakällor -->
-          <section id="data-sources">
-            <h3>Datakällor</h3>
-            <p>Bakgrundskartan kommer från OpenStreetMap. Information om adress, kommun och län hämtas via Nominatims geokodningstjänst.</p>
-            <p>Lagren som kan tändas och släckas i kartan kommer från:</p>
-            <ul>
-              <li>Län och kommun: Lantmäteriets öppna data 'Kommun, län och rike'</li>
-              <li>Landskap: Lantmäteriets öppna data 'Distriktsindelning'</li>
-              <li>Socken: Lantmäteriets öppna data 'Socken och stad'</li>
-              <li>Lappmarkerna är avgränsade med hjälp av kommungränser</li>
-            </ul>
-            <p>Dokumentation om respektive lager från Lantmäteriet finns på deras hemsida.</p>
-            <p>Information om län och kommun kan skilja sig mellan OpenStreetMap/Nominatim och Lantmäteriets data, särskilt om punkten ligger mycket nära en gräns.</p>
-          </section>
-          <br>
-        </main>
+          </div>
+
+          <!-- Info buttons - BOTTOM CENTER -->
+          <div class="info-buttons">
+            <button class="info-btn" onclick="openModal('tips')">💡 Söktips</button>
+            <button class="info-btn" onclick="openModal('sources')">ℹ️ Datakällor</button>
+          </div>
+        </div>
       </div>
 
-      <div id="converter" class="tab-content" style="display: none;">
-        <main class="container">
-          <!-- 🔄 Koordinatkonvertering -->
-          <h2>Konvertera koordinater</h2>
-          <section id="coordinate-converter" class="converter-container">
-            <!-- Inmatningsfält -->
-            <div class="converter-fields">
+      <!-- TAB 2: KONVERTERA -->
+      <div id="converter" class="tab-content">
+        <div class="page-content">
+          <div class="card">
+            <div class="section-header">
+              <h2>Konvertera koordinater</h2>
+            </div>
+
+            <div class="converter-grid">
               <input type="text" id="wgs84Input" placeholder="WGS84 (Lat, Lon)">
-              <input type="text" id="rt90Input" placeholder="RT90 (X, Y)">
-              <input type="text" id="swerefInput" placeholder="SWEREF 99 (X, Y)">
+              <input type="text" id="rt90Input" placeholder="RT90 2.5 gon V (Nord, Ost)">
+              <input type="text" id="swerefInput" placeholder="SWEREF99 TM (Nord, Ost)">
               <button id="convertButton">Konvertera</button>
             </div>
-            <br>
-            <!-- Resultat -->
-            <div id="conversion-results">
-              <h3>Resultat:</h3>
-              <p><strong>WGS84:</strong> <span id="wgs84Result">-</span></p>
-              <p><strong>RT90:</strong> <span id="rt90Result">-</span></p>
-              <p><strong>SWEREF99:</strong> <span id="swerefResult">-</span></p>
+
+            <div class="converter-results">
+              <h3>Resultat</h3>
+              <div class="result-row">
+                <span class="result-label">WGS84:</span>
+                <span class="result-value" id="wgs84Result">-</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">RT90 2.5 gon V:</span>
+                <span class="result-value" id="rt90Result">-</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">SWEREF99 TM:</span>
+                <span class="result-value" id="swerefResult">-</span>
+              </div>
             </div>
-          </section>
-        </main>
+          </div>
+        </div>
       </div>
 
-      <div id="hämta-geodata" class="tab-content" style="display: none;">
-        <main class="container">
-          <!-- 📂 Hämta geodata från koordinater -->
-          <section id="geo-instructions">
-            <h2>Hämta geodata från koordinater</h2>
-            <p>Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplats till län, landskap (eller lappmark), kommun, socken och adress.</p>
-            <p>Adressen hämtas från OpenStreetMap. Övrig data hämtas från Lantmäteriet.</p>
-            <ol>
-              <li>Välj din Excel-fil</li>
-              <li>Klicka på <strong>"Hämta geodata"</strong></li>
-              <li>Den bearbetade filen laddas ner automatiskt</li>
-            </ol>
-
-            <!-- Välj datakälla -->
-            <div id="dataSourceSelector">
-              <label>
-                <input type="radio" name="dataSource" value="lmOnly">
-                Hämta endast län, kommun, landskap (snabbare)
-              </label>
-              <label>
-                <input type="radio" name="dataSource" value="both" checked>
-                Hämta fullständig data (inkluderar även socken, adress)
-              </label>
+      <!-- TAB 3: HÄMTA GEODATA -->
+      <div id="hämta-geodata" class="tab-content">
+        <div class="page-content">
+          <div class="card">
+            <div class="section-header">
+              <h2>Hämta geodata från koordinater</h2>
             </div>
 
-            <br>
+            <p style="margin-bottom: 1.5rem;">Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplats till län, landskap (eller lappmark), kommun, socken och adress.</p>
 
-            <!-- Filuppladdning för Excel + knapp för att starta bearbetning -->
-            <div id="excel-upload">
+            <div class="info-box">
+              <h3>Välj datakälla</h3>
+              <div class="radio-group">
+                <label>
+                  <input type="radio" name="dataSource" value="lmOnly">
+                  <span>Hämta endast län, kommun, landskap (snabbare)</span>
+                </label>
+                <label>
+                  <input type="radio" name="dataSource" value="both" checked>
+                  <span>Hämta fullständig data (inkluderar även socken, adress)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="upload-area">
               <label for="excelFile" class="custom-file-upload">
-                <i class="fas fa-upload"></i> Välj fil
+                Välj Excel-fil
               </label>
               <input type="file" id="excelFile" accept=".xlsx,.xls" />
               <button id="processBtn">Hämta geodata</button>
-              <!-- Visar valt filnamn -->
               <span id="selectedFileName" class="file-info"></span>
             </div>
-            <br>
-            <!-- 📑 Filformat & krav -->
-            <h3>Filformat & krav</h3>
-            <p>Filen du laddar upp ska vara i <strong>Excel-format</strong> (<code>.xlsx</code> eller <code>.xls</code>) och innehålla följande kolumner:</p>
-            <table>
-              <tbody>
-                <tr>
-                  <td><code>id</code></td>
-                  <td>Unikt rad-ID (t.ex. katalognummer eller lokal-id; <em>valfritt</em>)</td>
-                </tr>
-                <tr>
-                  <td><code>lat</code></td>
-                  <td>Latitud i decimaltal</td>
-                </tr>
-                <tr>
-                  <td><code>lon</code></td>
-                  <td>Longitud i decimaltal</td>
-                </tr>
-              </tbody>
-            </table>
-            <br>
-            <!-- ℹ️ Viktig information -->
-            <h3>Viktigt</h3>
-            <ul>
-              <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver)</li>
-              <li>Koordinaterna ska vara i WGS84</li>
-              <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>)</li>
-            </ul>
-          </section>
-        </main>
+
+            <details>
+              <summary>Filformat & krav</summary>
+              <div class="details-content">
+                <p>Filen du laddar upp ska vara i <strong>Excel-format</strong> (<code>.xlsx</code> eller <code>.xls</code>) och innehålla följande kolumner:</p>
+                <table>
+                  <tbody>
+                    <tr>
+                      <td><code>id</code></td>
+                      <td>Unikt rad-ID (t.ex. katalognummer eller lokal-id; <em>valfritt</em>)</td>
+                    </tr>
+                    <tr>
+                      <td><code>lat</code></td>
+                      <td>Latitud i decimaltal</td>
+                    </tr>
+                    <tr>
+                      <td><code>lon</code></td>
+                      <td>Longitud i decimaltal</td>
+                    </tr>
+                  </tbody>
+                </table>
+                
+                <div class="info-box" style="margin-top: 1rem;">
+                  <h3>Viktigt</h3>
+                  <ul>
+                    <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver)</li>
+                    <li>Koordinaterna ska vara i WGS84</li>
+                    <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>)</li>
+                  </ul>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
       </div>
-    </div> <!-- .content -->
 
-    <!-- Gemensam footer för alla flikar -->
-    <footer>
-      <a href="https://github.com/alotsa" target="_blank" class="github-link">
-        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg" alt="GitHub" class="github-icon">
-      </a>
-    </footer>
-  </div> <!-- .wrapper -->
+    </div>
+  </div>
 
-  <!-- Skript -->
-  <!-- Externa bibliotek -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- MODALS -->
+  <!-- Search Tips Modal -->
+  <div id="tipsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Söktips</h3>
+        <button class="modal-close" onclick="closeModal('tips')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <ul>
+          <li>Du kan söka på ortnamn, sjöar, bäckar, vägnummer, trafikplatser, byggnader, restauranger m.m.</li>
+          <li>Koordinatsystem som stöds är WGS84 dec, RT90 och SWEREF99</li>
+          <li>Sök på socken genom att skriva t.ex. 'Hilleshög socken'</li>
+          <li>Socken-lagret behöver vara tänt för att det ska synas i pop up-rutan vilken socken en plats tillhör</li>
+          <li>För att hitta länsvägar (LV), sök på <a href="https://sv.wikipedia.org/wiki/L%C3%A4nsbokstav" target="_blank">länsbokstav</a> + vägnummer, t.ex. AB 1035</li>
+          <li>Riksvägar (RV) inleds inte med någon bokstav</li>
+          <li>Listan med förslag som visas efter en sökning är begränsad till 50 träffar</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Sources Modal -->
+  <div id="sourcesModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Datakällor</h3>
+        <button class="modal-close" onclick="closeModal('sources')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Bakgrundskartan kommer från OpenStreetMap. Information om adress, kommun och län hämtas via Nominatims geokodningstjänst.</p>
+        
+        <h4>Lagren som kan tändas och släckas i kartan kommer från:</h4>
+        <ul>
+          <li>Län och kommun: Lantmäteriets öppna data 'Kommun, län och rike'</li>
+          <li>Landskap: Lantmäteriets öppna data 'Distriktsindelning'</li>
+          <li>Socken: Lantmäteriets öppna data 'Socken och stad'</li>
+          <li>Lappmarkerna är avgränsade med hjälp av kommungränser</li>
+        </ul>
+        
+        <p><em>Information om län och kommun kan skilja sig mellan OpenStreetMap/Nominatim och Lantmäteriets data, särskilt om punkten ligger mycket nära en gräns.</em></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts - Load in proper order -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.6.2/proj4.js"></script>
-  <!-- Din egen JavaScript-fil -->
+  
+  <!-- Your JavaScript file -->
   <script src="script.js"></script>
 </body>
 </html>
