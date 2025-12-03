@@ -196,11 +196,19 @@ window.openTab = function(tabId) {
   document.querySelectorAll('.tab-button').forEach(btn => {
     if (btn.textContent.includes('Karta') && tabId === 'main') btn.classList.add('active');
     if (btn.textContent.includes('Konvertera') && tabId === 'converter') btn.classList.add('active');
+    if (btn.textContent.includes('Visa på karta') && tabId === 'visa-pa-karta') btn.classList.add('active');
     if (btn.textContent.includes('Hämta geodata') && tabId === 'hämta-geodata') btn.classList.add('active');
   });
 
   if (tabId === "main" && typeof map !== "undefined") {
     setTimeout(() => map.invalidateSize(), 300);
+  }
+  
+  if (tabId === "visa-pa-karta") {
+    setTimeout(() => {
+      initUploadMap();
+      if (mapUpload) mapUpload.invalidateSize();
+    }, 300);
   }
 }
 
@@ -290,7 +298,7 @@ async function showAllInfo(lat, lng) {
 
     let polygonText = infoList.length === 0
       ? "<em>Ingen polygonträff i aktiva lager</em>"
-      : infoList.join("") + "<br><strong>Källa:</strong> Lantmäteriet";
+      : infoList.join("") + "<br><strong>Källa:</strong> Lantmäteriet (utom lappmarker som avgränsas med kommungränser.";
 
     // Build coordinate display with all three systems
     let coordText = `<strong>WGS84:</strong> ${lat.toFixed(5)}, ${lng.toFixed(5)}<br>`;
@@ -775,4 +783,207 @@ function generateAndDownloadExcel(rows) {
   URL.revokeObjectURL(url);
 
   console.log("✅ Excel-fil med rätt kolumnordning och informationsblad skapad och nedladdad!");
+}
+
+/****************************************************
+ * VISA PÅ KARTA - UPLOAD COORDINATES
+ ****************************************************/
+
+let mapUpload;
+let uploadedMarkersGroup;
+
+// Initialize the upload map when switching to that tab
+function initUploadMap() {
+  if (mapUpload) return; // Already initialized
+
+  mapUpload = L.map('map-upload', {
+    center: [62.0, 15.0],
+    zoom: 5,
+    zoomSnap: 1,
+    zoomDelta: 1,
+    minZoom: 4,
+    maxZoom: 19
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    tileSize: 256,
+    detectRetina: false,
+    noWrap: true,
+    maxZoom: 19
+  }).addTo(mapUpload);
+
+  // Add layer control
+  let topowebb = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/topowebb/?', {
+    layers: ['topowebbkartan'],
+    format: 'image/png',
+    transparent: false,
+    maxZoom: 19
+  });
+
+  let ortofoto = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/ortofoto/?', {
+    layers: ['Ortofoto_0.5', 'Ortofoto_0.4', 'Ortofoto_0.25', 'Ortofoto_0.16'],
+    format: 'image/png',
+    transparent: false,
+    maxZoom: 17
+  });
+
+  let baseMaps = {};
+  let overlayMaps = {
+    "Topowebb": topowebb,
+    "Ortofoto": ortofoto
+  };
+
+  L.control.layers(baseMaps, overlayMaps, {
+    position: 'bottomright',
+    collapsed: true
+  }).addTo(mapUpload);
+
+  L.control.scale().addTo(mapUpload);
+
+  // Add coordinate display
+  const coordDisplay = L.control({ position: "bottomleft" });
+  coordDisplay.onAdd = function() {
+    const div = L.DomUtil.create("div", "coordinate-display");
+    div.innerHTML = "Lat: --, Lon: --";
+    return div;
+  };
+  coordDisplay.addTo(mapUpload);
+
+  mapUpload.on("mousemove", function(e) {
+    const coordDisplays = document.querySelectorAll(".coordinate-display");
+    if (coordDisplays.length > 1) {
+      coordDisplays[1].innerHTML = `Lat: ${e.latlng.lat.toFixed(5)}, Lon: ${e.latlng.lng.toFixed(5)}`;
+    }
+  });
+
+  setTimeout(() => mapUpload.invalidateSize(), 500);
+}
+
+// File upload handler - läs och visa direkt när fil väljs
+document.getElementById('coordFile').addEventListener('change', function(e) {
+  const fileNameDisplay = document.getElementById('coordFileName');
+  
+  if (e.target.files.length > 0) {
+    const file = e.target.files[0];
+    fileNameDisplay.textContent = `Vald fil: ${file.name}`;
+    readAndDisplayCoordinates(file);
+  } else {
+    fileNameDisplay.textContent = "";
+  }
+});
+
+document.getElementById('clearMapPinsBtn').addEventListener('click', function() {
+  if (uploadedMarkersGroup) {
+    mapUpload.removeLayer(uploadedMarkersGroup);
+    uploadedMarkersGroup = null;
+  }
+});
+
+function readAndDisplayCoordinates(file) {
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+      console.log("✅ Koordinatfil inläst:", jsonData);
+      displayCoordinatesOnMap(jsonData);
+    } catch (error) {
+      console.error("Fel vid inläsning av fil:", error);
+      alert("Kunde inte läsa filen. Kontrollera att den är i rätt format.");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+async function displayCoordinatesOnMap(rows) {
+  if (!mapUpload) {
+    initUploadMap();
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+
+  // Clear old markers
+  if (uploadedMarkersGroup) {
+    mapUpload.removeLayer(uploadedMarkersGroup);
+  }
+
+  uploadedMarkersGroup = L.featureGroup();
+
+  let validPoints = 0;
+
+  for (let row of rows) {
+    const lat = parseFloat(row.lat);
+    const lon = parseFloat(row.lon);
+    const namn = row.id || "ID saknas";
+
+    if (isNaN(lat) || isNaN(lon)) {
+      console.warn("Ogiltig koordinat:", row);
+      continue;
+    }
+
+    validPoints++;
+
+    // Create marker
+    const marker = L.marker([lat, lon]);
+
+    // Get location info
+    try {
+      // Convert to other coordinate systems
+      const rt90Coords = proj4("EPSG:4326", "EPSG:3847", [lon, lat]);
+      const swerefCoords = proj4("EPSG:4326", "EPSG:3006", [lon, lat]);
+
+      // Get address from Nominatim
+      const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+      const response = await fetch(nominatimUrl);
+      const data = await response.json();
+      const fullAddress = data.display_name || "Okänd plats";
+      const formattedAddress = fullAddress.split(", ").reverse().join(", ");
+
+      // Get polygon data
+      const lan = polygonLookup(lon, lat, geojsonLan, "lan") || "Okänt";
+      const kommun = polygonLookup(lon, lat, geojsonKommun, "kommun") || "Okänt";
+      const landskap = polygonLookup(lon, lat, geojsonLandskap, "Landskap-lappmark") || "Okänt";
+      const socken = polygonLookup(lon, lat, geojsonSockenstad, "sockenstadnamn") || "";
+
+      // Build popup content
+      let popupContent = `
+        <strong>${namn}</strong><br><br>
+        <strong>Koordinater:</strong><br>
+        <strong>WGS84:</strong> ${lat.toFixed(5)}, ${lon.toFixed(5)}<br>
+        <strong>RT90 2.5 gon V:</strong> ${Math.round(rt90Coords[1])}, ${Math.round(rt90Coords[0])}<br>
+        <strong>SWEREF99 TM:</strong> ${Math.round(swerefCoords[1])}, ${Math.round(swerefCoords[0])}<br>
+        <br>
+        <strong>Adress:</strong> ${formattedAddress}<br>
+        <strong>Källa:</strong> Nominatim/OpenStreetMap
+        <hr>
+        <strong>Kommun:</strong> ${kommun}<br>
+        <strong>Län:</strong> ${lan}<br>
+        <strong>Landskap:</strong> ${landskap}<br>
+        <strong>Källa:</strong> Lantmäteriet (utom lappmarker som baseras på kommungränser)
+      `;
+
+      marker.bindPopup(popupContent);
+    } catch (error) {
+      console.error("Fel vid hämtning av info för punkt:", namn, error);
+      marker.bindPopup(`<strong>${namn}</strong><br>Lat: ${lat}, Lon: ${lon}`);
+    }
+
+    marker.addTo(uploadedMarkersGroup);
+  }
+
+  uploadedMarkersGroup.addTo(mapUpload);
+
+  if (validPoints > 0) {
+    // Zoom to show all markers
+    mapUpload.fitBounds(uploadedMarkersGroup.getBounds(), { padding: [50, 50] });
+    alert(`${validPoints} punkter laddade på kartan!`);
+  } else {
+    alert("Inga giltiga koordinater hittades i filen.");
+  }
 }

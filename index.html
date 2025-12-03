@@ -21,23 +21,35 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- HEADER -->
+<!-- HEADER -->
     <header>
+      <div class="snowflake">❄</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❄</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❄</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      
       <div class="header-content">
         <div class="logo-section">
-          <div class="logo-placeholder">G</div>
           <div class="brand-text">
             <h1>geoLocus</h1>
             <p>Län, kommun och landskap i ett klick!</p>
           </div>
         </div>
         
-        <nav class="tab-nav">
+<nav class="tab-nav">
           <button class="tab-button active" onclick="openTab('main')">
             Karta
           </button>
           <button class="tab-button" onclick="openTab('converter')">
             Konvertera
+          </button>
+          <button class="tab-button" onclick="openTab('visa-pa-karta')">
+            Visa koordinater på karta
           </button>
           <button class="tab-button" onclick="openTab('hämta-geodata')">
             Hämta geodata
@@ -184,7 +196,37 @@
         </div>
       </div>
 
-      <!-- TAB 3: HÄMTA GEODATA -->
+            <!-- TAB 3: VISA KOORDINATER PÅ KARTA -->
+      <div id="visa-pa-karta" class="tab-content">
+        <div id="map-view-upload">
+          <div id="map-upload"></div>
+          
+          <!-- Upload controls overlaid on map -->
+          <div class="upload-controls">
+            <div class="upload-panel">
+              <h3>Ladda upp koordinater</h3>
+              <p style="margin-bottom: 1rem; font-size: 0.875rem; color: #64748b;">
+                Ladda upp en Excel-fil med kolumnerna: <code>lat</code>, <code>lon</code>, <code>namn</code>
+              </p>
+              
+              <div class="upload-area-compact">
+                <label for="coordFile" class="custom-file-upload">
+                  Välj Excel-fil
+                </label>
+                <input type="file" id="coordFile" accept=".xlsx,.xls,.csv" />
+              </div>
+              
+              <span id="coordFileName" class="file-info"></span>
+              
+              <button id="clearMapPinsBtn" class="secondary" style="width: 100%; margin-top: 0.75rem;">
+                Rensa kartan
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: HÄMTA GEODATA -->
       <div id="hämta-geodata" class="tab-content">
         <div class="page-content">
           <div class="card">
