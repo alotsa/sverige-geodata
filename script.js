@@ -298,7 +298,7 @@ async function showAllInfo(lat, lng) {
 
     let polygonText = infoList.length === 0
       ? "<em>Ingen polygonträff i aktiva lager</em>"
-      : infoList.join("") + "<br><strong>Källa:</strong> Lantmäteriet (utom lappmarker som avgränsas med kommungränser.";
+      : infoList.join("") + "<br><strong>Källa:</strong> Lantmäteriet (utom lappmarker som avgränsas med kommungränser)";
 
     // Build coordinate display with all three systems
     let coordText = `<strong>WGS84:</strong> ${lat.toFixed(5)}, ${lng.toFixed(5)}<br>`;
@@ -952,21 +952,23 @@ async function displayCoordinatesOnMap(rows) {
       const socken = polygonLookup(lon, lat, geojsonSockenstad, "sockenstadnamn") || "";
 
       // Build popup content
-      let popupContent = `
-        <strong>${namn}</strong><br><br>
-        <strong>Koordinater:</strong><br>
-        <strong>WGS84:</strong> ${lat.toFixed(5)}, ${lon.toFixed(5)}<br>
-        <strong>RT90 2.5 gon V:</strong> ${Math.round(rt90Coords[1])}, ${Math.round(rt90Coords[0])}<br>
-        <strong>SWEREF99 TM:</strong> ${Math.round(swerefCoords[1])}, ${Math.round(swerefCoords[0])}<br>
-        <br>
-        <strong>Adress:</strong> ${formattedAddress}<br>
-        <strong>Källa:</strong> Nominatim/OpenStreetMap
-        <hr>
-        <strong>Kommun:</strong> ${kommun}<br>
-        <strong>Län:</strong> ${lan}<br>
-        <strong>Landskap:</strong> ${landskap}<br>
-        <strong>Källa:</strong> Lantmäteriet (utom lappmarker som baseras på kommungränser)
-      `;
+let popupContent = `
+  <strong>id:</strong> ${row.id}<br><br>
+  <strong>Koordinater:</strong><br>
+  <strong>WGS84:</strong> ${lat.toFixed(5)}, ${lon.toFixed(5)}<br>
+  <strong>RT90 2.5 gon V:</strong> ${Math.round(rt90Coords[1])}, ${Math.round(rt90Coords[0])}<br>
+  <strong>SWEREF99 TM:</strong> ${Math.round(swerefCoords[1])}, ${Math.round(swerefCoords[0])}<br>
+  <br>
+  <strong>Adress:</strong> ${formattedAddress}<br><br>
+  <strong>Källa:</strong> Nominatim/OpenStreetMap
+  <hr>
+  <strong>Kommun:</strong> ${kommun}<br>
+  <strong>Län:</strong> ${lan}<br>
+  <strong>Landskap:</strong> ${landskap}<br>
+  ${socken ? `<strong>Socken:</strong> ${socken}<br>` : ``}
+  <strong>Källa:</strong> Lantmäteriet (utom lappmarker som avgränsas med kommungränser)
+`;
+
 
       marker.bindPopup(popupContent);
     } catch (error) {

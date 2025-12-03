@@ -174,7 +174,7 @@ header {
 .search-panel {
   background: white;
   border-radius: 12px;
-  padding: 1rem;
+  padding: 0.75rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border: 1px solid #e2e8f0;
 }
@@ -208,10 +208,10 @@ header {
 
 input[type="text"] {
   flex: 1;
-  padding: 0.625rem 0.875rem;
+  padding: 0.45rem 0.65rem;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   transition: all 0.2s ease;
   font-family: 'Inter', sans-serif;
 }
@@ -223,13 +223,13 @@ input[type="text"]:focus {
 }
 
 button {
-  padding: 0.625rem 1rem;
+  padding: 0.45rem 0.75rem;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: 'Inter', sans-serif;
@@ -314,7 +314,7 @@ button.icon-btn:hover {
 }
 
 .filters-toggle {
-  padding: 0.875rem 1rem;
+  padding: 0.45rem 0.7rem;
   cursor: pointer;
   font-weight: 600;
   font-size: 0.9375rem;
@@ -356,16 +356,16 @@ button.icon-btn:hover {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   color: #475569;
 }
 
 select {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-family: 'Inter', sans-serif;
   background: white;
   cursor: pointer;
@@ -617,12 +617,13 @@ input[type="checkbox"] {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.55rem 1.3rem;
   background: #f8fafc;
   border: 2px dashed #cbd5e1;
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 0.9375rem;
   color: #475569;
   transition: all 0.2s ease;
 }
@@ -810,17 +811,17 @@ table td:first-child {
   }
   
   .filters-panel {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
   
   .filters-toggle {
-    padding: 0.625rem 0.75rem;
-    font-size: 0.875rem;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.8125rem;
   }
   
   #results li {
-    padding: 0.625rem 0.75rem;
-    font-size: 0.875rem;
+    padding: 0.55rem 0.65rem;
+    font-size: 0.8125rem;
   }
 }
 
@@ -839,7 +840,7 @@ table td:first-child {
 .upload-controls {
   position: absolute;
   top: 1rem;
-  right: 1rem;
+  left: 1rem;
   z-index: 500;
   max-width: 350px;
 }
