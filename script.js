@@ -244,6 +244,18 @@ window.toggleFilters = function() {
   arrow.textContent = content.classList.contains('active') ? '▲' : '▼';
 }
 
+// Helper function to format landskap display
+function formatLandskap(landskapName) {
+  if (!landskapName) return "";
+  
+  // Check if it's a lappmark (contains "lappmark" in the name)
+  if (landskapName.toLowerCase().includes("lappmark")) {
+    return `Lappland (${landskapName})`;
+  }
+  
+  return landskapName;
+}
+
 // Show location info with all three coordinate systems
 async function showAllInfo(lat, lng) {
   try {
@@ -288,7 +300,10 @@ async function showAllInfo(lat, lng) {
             let text = "";
             if (foundKommun) text += `<strong>Kommun:</strong> ${foundKommun}<br>`;
             if (foundLan) text += `<strong>Län:</strong> ${foundLan}<br>`;
-            if (foundLappmark) text += `<strong>Landskap:</strong> ${foundLappmark}<br>`;
+            if (foundLappmark) {
+              const formattedLandskap = formatLandskap(foundLappmark);
+              text += `<strong>Landskap:</strong> ${formattedLandskap}<br>`;
+            }
             if (foundSocken) text += `<strong>Socken:</strong> ${foundSocken}<br>`;
             infoList.push(text);
           }
@@ -301,7 +316,7 @@ async function showAllInfo(lat, lng) {
       : infoList.join("") + "<br><strong>Källa:</strong> Lantmäteriet (utom lappmarker som avgränsas med kommungränser)";
 
     // Build coordinate display with all three systems
-    let coordText = `<strong>WGS84:</strong> ${lat.toFixed(5)}, ${lng.toFixed(5)}<br>`;
+    let coordText = `<strong>WGS84:</strong> ${lat.toFixed(5)}, ${lng.toFixed(5)} <span onclick="copyCoordinates(${lat}, ${lng})" style="cursor: pointer; padding-left: 0.25rem; color: #1e293b;" title="Kopiera koordinater"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2z"/></svg></span><br>`;
     if (rt90Coords) {
       coordText += `<strong>RT90 2.5 gon V:</strong> ${Math.round(rt90Coords[1])}, ${Math.round(rt90Coords[0])}<br>`;
     }
@@ -664,11 +679,45 @@ async function processRows(rows) {
   console.log("🔍 Startar bearbetning av rader...");
 
   const dataSource = document.querySelector('input[name="dataSource"]:checked').value;
+  
+  // Show progress container
+  const progressContainer = document.getElementById('progressContainer');
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  const progressPercent = document.getElementById('progressPercent');
+  const progressCount = document.getElementById('progressCount');
+  const progressTime = document.getElementById('progressTime');
+  
+  if (progressContainer) {
+    progressContainer.style.display = 'block';
+  }
+  
+  const totalRows = rows.length;
+  const startTime = Date.now();
 
-  for (let row of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
     const lat = parseFloat(row.lat);
     const lon = parseFloat(row.lon);
     let manuellKontroll = "";
+    
+    // Update progress
+    const progress = ((i + 1) / totalRows) * 100;
+    const elapsed = (Date.now() - startTime) / 1000;
+    const estimatedTotal = (elapsed / (i + 1)) * totalRows;
+    const remaining = Math.max(0, estimatedTotal - elapsed);
+    
+    if (progressBar) progressBar.style.width = progress + '%';
+    if (progressPercent) progressPercent.textContent = Math.round(progress) + '%';
+    if (progressCount) progressCount.textContent = `${i + 1} / ${totalRows}`;
+    if (progressText) progressText.textContent = `Bearbetar rad ${i + 1} av ${totalRows}`;
+    if (progressTime && remaining > 0) {
+      const mins = Math.floor(remaining / 60);
+      const secs = Math.round(remaining % 60);
+      progressTime.textContent = mins > 0 
+        ? `Uppskattad tid kvar: ${mins}m ${secs}s`
+        : `Uppskattad tid kvar: ${secs}s`;
+    }
 
     if (isNaN(lat) || isNaN(lon) || lat < 55 || lat > 70 || lon < 10 || lon > 25) {
       console.warn("⚠️ Ogiltiga koordinater i rad:", row);
@@ -682,7 +731,11 @@ async function processRows(rows) {
     } else {
       row.lan = polygonLookup(lon, lat, geojsonLan, "lan") || "";
       row.kommun = polygonLookup(lon, lat, geojsonKommun, "kommun") || "";
-      row.landskap = polygonLookup(lon, lat, geojsonLandskap, "Landskap-lappmark") || "";
+      
+      // Get landskap and format it if it's a lappmark
+      const rawLandskap = polygonLookup(lon, lat, geojsonLandskap, "Landskap-lappmark") || "";
+      row.landskap = formatLandskap(rawLandskap);
+      
       row.socken = polygonLookup(lon, lat, geojsonSockenstad, "sockenstadnamn") || "";
 
       if (!row.lan || !row.kommun || !row.landskap) {
@@ -702,6 +755,9 @@ async function processRows(rows) {
           let sortedAddress = fullAddress.split(", ").reverse().join(", ");
           row.adress = sortedAddress;
 
+          // Add small delay to respect API rate limits
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
         } catch (error) {
           console.error("Fel vid hämtning av adress från Nominatim:", error);
           row.adress = "N/A";
@@ -715,9 +771,19 @@ async function processRows(rows) {
 
     row.manuell_kontroll = manuellKontroll;
   }
+  
+  // Show completion
+  if (progressText) progressText.textContent = 'Klar! Genererar Excel-fil...';
+  if (progressPercent) progressPercent.textContent = '100%';
+  if (progressTime) progressTime.textContent = '';
 
   console.log("✅ Färdig med bearbetning. Rader:", rows);
   generateAndDownloadExcel(rows);
+  
+  // Hide progress after download
+  setTimeout(() => {
+    if (progressContainer) progressContainer.style.display = 'none';
+  }, 2000);
 }
 
 function polygonLookup(lon, lat, geojson, propertyName) {
@@ -917,10 +983,10 @@ async function displayCoordinatesOnMap(rows) {
 
   let validPoints = 0;
 
+  // Process all markers immediately with local data (fast!)
   for (let row of rows) {
     const lat = parseFloat(row.lat);
     const lon = parseFloat(row.lon);
-    const namn = row.id || "ID saknas";
 
     if (isNaN(lat) || isNaN(lon)) {
       console.warn("Ogiltig koordinat:", row);
@@ -929,30 +995,64 @@ async function displayCoordinatesOnMap(rows) {
 
     validPoints++;
 
-    // Create marker
+    // Convert coordinates (local, instant)
+    const rt90Coords = proj4("EPSG:4326", "EPSG:3847", [lon, lat]);
+    const swerefCoords = proj4("EPSG:4326", "EPSG:3006", [lon, lat]);
+
+    // Get polygon data (local, instant)
+    const lan = polygonLookup(lon, lat, geojsonLan, "lan") || "Okänt";
+    const kommun = polygonLookup(lon, lat, geojsonKommun, "kommun") || "Okänt";
+    const rawLandskap = polygonLookup(lon, lat, geojsonLandskap, "Landskap-lappmark") || "Okänt";
+    const landskap = formatLandskap(rawLandskap);
+    const socken = polygonLookup(lon, lat, geojsonSockenstad, "sockenstadnamn") || "";
+
+    // Create marker with initial popup (no address yet - will load on click)
     const marker = L.marker([lat, lon]);
 
-    // Get location info
-    try {
-      // Convert to other coordinate systems
-      const rt90Coords = proj4("EPSG:4326", "EPSG:3847", [lon, lat]);
-      const swerefCoords = proj4("EPSG:4326", "EPSG:3006", [lon, lat]);
+    // Build initial popup content WITHOUT address (instant)
+    let initialPopupContent = `
+  <strong>id:</strong> ${row.id}<br><br>
+  <strong>Koordinater:</strong><br>
+  <strong>WGS84:</strong> ${lat.toFixed(5)}, ${lon.toFixed(5)}<br>
+  <strong>RT90 2.5 gon V:</strong> ${Math.round(rt90Coords[1])}, ${Math.round(rt90Coords[0])}<br>
+  <strong>SWEREF99 TM:</strong> ${Math.round(swerefCoords[1])}, ${Math.round(swerefCoords[0])}<br>
+  <br>
+  <strong>Adress:</strong> <em style="color: #64748b;">Klicka på markören för att hämta adress...</em><br>
+  <hr>
+  <strong>Kommun:</strong> ${kommun}<br>
+  <strong>Län:</strong> ${lan}<br>
+  <strong>Landskap:</strong> ${landskap}<br>
+  ${socken ? `<strong>Socken:</strong> ${socken}<br>` : ``}
+  <strong>Källa:</strong> Lantmäteriet (utom lappmarker som avgränsas med kommungränser)
+`;
 
-      // Get address from Nominatim
-      const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
-      const response = await fetch(nominatimUrl);
-      const data = await response.json();
-      const fullAddress = data.display_name || "Okänd plats";
-      const formattedAddress = fullAddress.split(", ").reverse().join(", ");
+    marker.bindPopup(initialPopupContent);
 
-      // Get polygon data
-      const lan = polygonLookup(lon, lat, geojsonLan, "lan") || "Okänt";
-      const kommun = polygonLookup(lon, lat, geojsonKommun, "kommun") || "Okänt";
-      const landskap = polygonLookup(lon, lat, geojsonLandskap, "Landskap-lappmark") || "Okänt";
-      const socken = polygonLookup(lon, lat, geojsonSockenstad, "sockenstadnamn") || "";
+    // Lazy-load address data when popup is opened (only if user clicks!)
+    marker.on('popupopen', async function() {
+      const popup = marker.getPopup();
+      
+      // Check if we already fetched the address
+      if (marker._addressFetched) {
+        return;
+      }
+      
+      try {
+        // Show loading state
+        popup.setContent(initialPopupContent.replace(
+          'Klicka på markören för att hämta adress...',
+          '<span style="color: #10b981;">Hämtar adress...</span>'
+        ));
 
-      // Build popup content
-let popupContent = `
+        // Fetch address from Nominatim
+        const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+        const response = await fetch(nominatimUrl);
+        const data = await response.json();
+        const fullAddress = data.display_name || "Okänd plats";
+        const formattedAddress = fullAddress.split(", ").reverse().join(", ");
+
+        // Update popup with address
+        let fullPopupContent = `
   <strong>id:</strong> ${row.id}<br><br>
   <strong>Koordinater:</strong><br>
   <strong>WGS84:</strong> ${lat.toFixed(5)}, ${lon.toFixed(5)}<br>
@@ -969,12 +1069,17 @@ let popupContent = `
   <strong>Källa:</strong> Lantmäteriet (utom lappmarker som avgränsas med kommungränser)
 `;
 
+        popup.setContent(fullPopupContent);
+        marker._addressFetched = true;
 
-      marker.bindPopup(popupContent);
-    } catch (error) {
-      console.error("Fel vid hämtning av info för punkt:", namn, error);
-      marker.bindPopup(`<strong>${namn}</strong><br>Lat: ${lat}, Lon: ${lon}`);
-    }
+      } catch (error) {
+        console.error("Fel vid hämtning av adress:", error);
+        popup.setContent(initialPopupContent.replace(
+          'Klicka på markören för att hämta adress...',
+          '<span style="color: #ef4444;">Kunde inte hämta adress</span>'
+        ));
+      }
+    });
 
     marker.addTo(uploadedMarkersGroup);
   }
@@ -984,8 +1089,156 @@ let popupContent = `
   if (validPoints > 0) {
     // Zoom to show all markers
     mapUpload.fitBounds(uploadedMarkersGroup.getBounds(), { padding: [50, 50] });
-    alert(`${validPoints} punkter laddade på kartan!`);
+    alert(`${validPoints} punkter laddade på kartan!\n\nAdresser hämtas automatiskt när du klickar på en markör.`);
   } else {
     alert("Inga giltiga koordinater hittades i filen.");
   }
+}
+
+// ==========================================
+// MOBILE MENU FUNCTIONS
+// ==========================================
+
+// Mobile menu toggle
+window.toggleMobileMenu = function(event) {
+  if (event) {
+    event.stopPropagation();
+  }
+  
+  const nav = document.getElementById('mobileTabNav');
+  const toggle = document.querySelector('.mobile-menu-toggle');
+  
+  if (nav) {
+    const isOpen = nav.classList.contains('mobile-menu-open');
+    
+    if (isOpen) {
+      nav.classList.remove('mobile-menu-open');
+      if (toggle) toggle.classList.remove('active');
+    } else {
+      nav.classList.add('mobile-menu-open');
+      if (toggle) toggle.classList.add('active');
+    }
+  }
+}
+
+// Close mobile menu
+window.closeMobileMenu = function() {
+  const nav = document.getElementById('mobileTabNav');
+  const toggle = document.querySelector('.mobile-menu-toggle');
+  
+  if (nav) {
+    nav.classList.remove('mobile-menu-open');
+  }
+  if (toggle) {
+    toggle.classList.remove('active');
+  }
+}
+
+// Close menu when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('click', function(event) {
+    const nav = document.getElementById('mobileTabNav');
+    const toggle = document.querySelector('.mobile-menu-toggle');
+    
+    if (nav && toggle && nav.classList.contains('mobile-menu-open')) {
+      if (!nav.contains(event.target) && !toggle.contains(event.target)) {
+        nav.classList.remove('mobile-menu-open');
+        toggle.classList.remove('active');
+      }
+    }
+  });
+});
+
+// ==========================================
+// COPY COORDINATES FUNCTION
+// ==========================================
+// Add this function to your script.js
+
+// Copy WGS84 coordinates to clipboard
+window.copyCoordinates = function(lat, lng) {
+  const coordText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  
+  // Use modern clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(coordText).then(() => {
+      // Show success feedback
+      showCopyFeedback('Koordinater kopierade! 📋');
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+      fallbackCopy(coordText);
+    });
+  } else {
+    // Fallback for older browsers
+    fallbackCopy(coordText);
+  }
+}
+
+// Fallback copy method for older browsers
+function fallbackCopy(text) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-999999px';
+  document.body.appendChild(textArea);
+  textArea.select();
+  
+  try {
+    document.execCommand('copy');
+    showCopyFeedback('Koordinater kopierade! 📋');
+  } catch (err) {
+    showCopyFeedback('Kunde inte kopiera 😞');
+  }
+  
+  document.body.removeChild(textArea);
+}
+
+// Show visual feedback when coordinates are copied
+function showCopyFeedback(message) {
+  // Remove existing feedback if any
+  const existing = document.getElementById('copy-feedback');
+  if (existing) {
+    existing.remove();
+  }
+  
+  // Create feedback element
+  const feedback = document.createElement('div');
+  feedback.id = 'copy-feedback';
+  feedback.textContent = message;
+  feedback.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(16, 185, 129, 0.95);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: fadeInOut 2s ease-in-out;
+  `;
+  
+  document.body.appendChild(feedback);
+  
+  // Remove after 2 seconds
+  setTimeout(() => {
+    feedback.remove();
+  }, 2000);
+}
+
+// Add CSS animation for feedback
+if (!document.getElementById('copy-feedback-styles')) {
+  const style = document.createElement('style');
+  style.id = 'copy-feedback-styles';
+  style.textContent = `
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+      20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    }
+  `;
+  document.head.appendChild(style);
 }
