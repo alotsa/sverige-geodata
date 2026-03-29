@@ -1319,9 +1319,9 @@ async function displayCoordinatesOnMap(rows) {
   if (validPoints > 0) {
     // Zoom to show all markers
     mapUpload.fitBounds(uploadedMarkersGroup.getBounds(), { padding: [50, 50] });
-    alert(`${validPoints} punkter laddade på kartan!\n\nAdresser hämtas automatiskt när du klickar på en markör.`);
+    showCopyFeedback(`${validPoints} punkter laddade på kartan!`);
   } else {
-    alert("Inga giltiga koordinater hittades i filen.");
+    showCopyFeedback("Inga giltiga koordinater hittades i filen.");
   }
 }
 
