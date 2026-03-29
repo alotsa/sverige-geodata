@@ -61,6 +61,8 @@ function loadGeoJSON() {
     
     // Add GeoJSON layers to map after data is loaded
     addGeoJsonLayers();
+    
+
   })
   .catch(err => {
     console.error("❌ Fel vid inläsning av GeoJSON:", err);
@@ -1103,26 +1105,28 @@ function initUploadMap() {
     maxZoom: 17
   });
 
-  // GeoJSON-lager (återanvänder redan inläst data)
-  const kommunLayer = L.geoJSON(geojsonKommun, { style: { color: "#10b981", weight: 1, fillOpacity: 0 } });
-  const lanLayer = L.geoJSON(geojsonLan, { style: { color: "#3b82f6", weight: 2, fillOpacity: 0 } });
-  const landskapLayer = L.geoJSON(geojsonLandskap, { style: { color: "#8b5cf6", weight: 1, fillOpacity: 0 } });
-  const socknarLayer = L.geoJSON(geojsonSockenstad, { style: { color: "#000000", weight: 2, fillOpacity: 0 } });
-
   let baseMaps = {};
   let overlayMaps = {
     "Topowebb": topowebb,
-    "Ortofoto": ortofoto,
-    "Kommun": kommunLayer,
-    "Län": lanLayer,
-    "Landskap": landskapLayer,
-    "Socknar": socknarLayer
+    "Ortofoto": ortofoto
   };
 
-  // Lägg till standardlager
-  kommunLayer.addTo(mapUpload);
-  lanLayer.addTo(mapUpload);
-  landskapLayer.addTo(mapUpload);
+  // GeoJSON-lager – läggs till direkt om datan finns
+  if (geojsonKommun) {
+    const kommunLayer = L.geoJSON(geojsonKommun, { style: { color: "#10b981", weight: 1, fillOpacity: 0 } });
+    const lanLayer = L.geoJSON(geojsonLan, { style: { color: "#3b82f6", weight: 2, fillOpacity: 0 } });
+    const landskapLayer = L.geoJSON(geojsonLandskap, { style: { color: "#8b5cf6", weight: 1, fillOpacity: 0 } });
+    const socknarLayer = L.geoJSON(geojsonSockenstad, { style: { color: "#000000", weight: 2, fillOpacity: 0 } });
+    overlayMaps["Kommun"] = kommunLayer;
+    overlayMaps["Län"] = lanLayer;
+    overlayMaps["Landskap"] = landskapLayer;
+    overlayMaps["Socknar"] = socknarLayer;
+    kommunLayer.addTo(mapUpload);
+    lanLayer.addTo(mapUpload);
+    landskapLayer.addTo(mapUpload);
+  } else {
+    console.warn("GeoJSON ej inläst än – lager läggs till när data finns");
+  }
 
   L.control.layers(baseMaps, overlayMaps, {
     position: 'bottomright',
@@ -1212,7 +1216,7 @@ async function displayCoordinatesOnMap(rows) {
     const lat = parseFloat(row.lat);
     const lon = parseFloat(row.lon);
 
-    if (isNaN(lat) || isNaN(lon)) {
+    if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
       console.warn("Ogiltig koordinat:", row);
       continue;
     }
