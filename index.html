@@ -36,9 +36,10 @@
         
         <nav class="tab-nav" id="mobileTabNav">
           <button class="tab-button active" onclick="openTab('main'); closeMobileMenu()">Karta</button>
-          <button class="tab-button" onclick="openTab('converter'); closeMobileMenu()">Konvertera</button>
           <button class="tab-button" onclick="openTab('visa-pa-karta'); closeMobileMenu()">Visa koordinater på karta</button>
           <button class="tab-button" onclick="openTab('hämta-geodata'); closeMobileMenu()">Hämta geodata</button>
+          <button class="tab-button" onclick="openTab('converter'); closeMobileMenu()">Konvertera</button>
+          <button class="tab-button" onclick="openTab('dokumentation'); closeMobileMenu()">Dokumentation</button>
         </nav>
       </div>
     </header>
@@ -144,9 +145,6 @@
             <button class="info-btn" onclick="openModal('tips')" title="Söktips">
               💡<span class="info-btn-text"> Söktips</span>
             </button>
-            <button class="info-btn" onclick="openModal('sources')" title="Datakällor">
-              ℹ️<span class="info-btn-text"> Datakällor</span>
-            </button>
           </div>
         </div>
       </div>
@@ -195,12 +193,12 @@
             <div class="upload-panel">
               <h3>Ladda upp koordinater</h3>
               <p style="margin-bottom: 1rem; font-size: 0.875rem; color: #64748b;">
-                Ladda upp en Excel-fil med kolumnerna: <code>lat</code>, <code>lon</code>, <code>id</code>
+                Ladda upp en Excel- eller CSV-fil med kolumnerna: <code>lat</code>, <code>lon</code>, <code>id</code>
               </p>
               
               <div class="upload-area-compact">
                 <label for="coordFile" class="custom-file-upload">
-                  Välj Excel-fil
+                  Välj fil
                 </label>
                 <input type="file" id="coordFile" accept=".xlsx,.xls,.csv" />
               </div>
@@ -223,30 +221,31 @@
               <h2>Hämta geodata från koordinater</h2>
             </div>
 
-            <p style="margin-bottom: 1.5rem;">Ladda upp en Excel-fil med koordinater och få tillbaka en fil där varje punkt kopplats till län, landskap (eller lappmark), kommun, socken och adress.</p>
+            <p style="margin-bottom: 1.5rem;">Ladda upp en Excel- eller CSV-fil med koordinater och få tillbaka en fil där varje punkt kopplas till geografisk information via Nominatim. Punkter inom Sveriges gränser hämtar också information från Lantmäteriet.</p>
 
             <div class="info-box">
               <h3>Välj datakälla</h3>
               <div class="radio-group">
                 <label>
                   <input type="radio" name="dataSource" value="lmOnly">
-                  <span>Hämta endast län, kommun, landskap (snabbare)</span>
+                  <span>Hämta län, landskap, kommun, socken via Lantmäteriet (snabbare)</span>
                 </label>
                 <label>
                   <input type="radio" name="dataSource" value="both" checked>
-                  <span>Hämta fullständig data (inkluderar även socken, adress)</span>
+                  <span>Hämta allt ovan + land och adress via Nominatim</span>
                 </label>
               </div>
             </div>
 
             <div class="upload-area">
               <label for="excelFile" class="custom-file-upload">
-                Välj Excel-fil
+                Välj fil
               </label>
-              <input type="file" id="excelFile" accept=".xlsx,.xls" />
+              <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" />
               <button id="processBtn">Hämta geodata</button>
               <span id="selectedFileName" class="file-info"></span>
             </div>
+            <div id="fileValidationMessage" style="display:none; margin-top: 0.75rem; padding: 0.875rem 1rem; border-radius: 8px; border: 2px solid; font-size: 0.875rem; font-weight: 500;"></div>
             
             <!-- Progress indicator -->
             <div id="progressContainer" style="display: none; margin-top: 1.5rem;">
@@ -267,7 +266,7 @@
             <details>
               <summary>Filformat & krav</summary>
               <div class="details-content">
-                <p>Filen du laddar upp ska vara i <strong>Excel-format</strong> (<code>.xlsx</code> eller <code>.xls</code>) och innehålla följande kolumner:</p>
+                <p>Filen du laddar upp ska vara i <strong>Excel- eller CSV-format</strong> (<code>.xlsx</code> eller <code>.xls</code>) eller <strong>CSV-format</strong> (<code>.csv</code>) och innehålla följande kolumner:</p>
                 <table>
                   <tbody>
                     <tr>
@@ -288,13 +287,104 @@
                 <div class="info-box" style="margin-top: 1rem;">
                   <h3>Viktigt</h3>
                   <ul>
-                    <li>Kolumnnamnen måste skrivas exakt som ovan (små bokstäver)</li>
-                    <li>Koordinaterna ska vara i WGS84</li>
-                    <li>Decimaler ska anges med punkt (<code>.</code>), inte komma (<code>,</code>)</li>
+                    <li>Kolumnnamnen måste stavas rätt. Versaler eller gemener spelar ingen roll.</li>
+                    <li>Koordinaterna ska vara i WGS84 decimalgrader.</li>
+                    <li>Decimaler kan anges med punkt eller komma.</li>
                   </ul>
                 </div>
               </div>
             </details>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: DOKUMENTATION -->
+      <div id="dokumentation" class="tab-content">
+        <div class="page-content">
+          <div class="card">
+            <div class="section-header">
+              <h2>Om geoLocus</h2>
+            </div>
+            <p>geoLocus är ett webbaserat verktyg för att georeferera koordinater och visa geografisk information om platser i Sverige och världen. Verktyget är byggt med HTML, CSS och JavaScript och använder biblioteken Leaflet.js (kartor), Turf.js (polygonanalys) och proj4js (koordinattransformation). Projektet är öppet – källkoden finns på <a href="https://github.com/alotsa/sverige-geodata" target="_blank">GitHub</a>. Senaste uppdateringen gjordes 2026-03-29.</p>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <h2>Koordinatsystem</h2>
+            </div>
+            <p>Följande koordinatsystem stöds för inmatning och visning:</p>
+            <table>
+              <tbody>
+                <tr>
+                  <td><strong>WGS84</strong></td>
+                  <td>Det globala standardsystemet som används av GPS</td>
+                </tr>
+                <tr>
+                  <td><strong>RT90 2.5 gon V</strong></td>
+                  <td>Det svenska referenssystemet som användes i kartproduktion fram till 2007</td>
+                </tr>
+                <tr>
+                  <td><strong>SWEREF99 TM</strong></td>
+                  <td>Det moderna svenska referenssystemet som ersatte RT90</td>
+                </tr>
+                <tr>
+                  <td><strong>DMS</strong></td>
+                  <td>Grader, minuter, sekunder</td>
+                </tr>
+                <tr>
+                  <td><strong>DDM</strong></td>
+                  <td>Grader, decimalminuter</td>
+                </tr>
+              </tbody>
+            </table>
+            <p style="margin-top: 1rem;">JavaScript-biblioteket proj4js kan inte hantera transformationen mellan RT90:s ursprungliga Bessel-ellipsoid och WGS84 med tillräcklig noggrannhet. Därför följer konverteringen Lantmäteriets nationella direktprojektion (EPSG:3847), där GRS80-ellipsoiden används som grund istället för Bessel. Noggrannheten är under 0,2 meter och metoden rekommenderas av Lantmäteriet.</p>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <h2>Datakällor</h2>
+            </div>
+
+            <h4>Bakgrundskarta och adressinformation</h4>
+            <p>Bakgrundskartan kommer från OpenStreetMap. Adress, land och omvänd geokodning hämtas via Nominatims API. Nominatim används i enlighet med tjänstens användningsvillkor med max ett anrop per sekund.</p>
+
+            <h4 style="margin-top: 1rem;">Svenska administrativa gränser</h4>
+            <p>Lagren för län, kommun, landskap och socken kommer från Lantmäteriets öppna geodata (nedladdat 2025):</p>
+            <table>
+              <tbody>
+                <tr>
+                  <td><strong></strong></td>
+                  <td><strong>Produktnamn hos Lantmäteriet</strong></td>
+                </tr>
+                <tr>
+                  <td>Län och kommun</td>
+                  <td><em>Kommun, län och rike</em></td>
+                </tr>
+                <tr>
+                  <td>Landskap</td>
+                  <td><em>Distriktsindelning</em></td>
+                </tr>
+                <tr>
+                  <td>Socken</td>
+                  <td><em>Socken och stad</em></td>
+                </tr>
+              </tbody>
+            </table>
+            <p style="margin-top: 0.75rem;">Lappmarksgränserna är approximerade med hjälp av kommungränser.</p>
+
+            <h4 style="margin-top: 1rem;">Övriga kartlager</h4>
+            <p>Lantmäteriets Topowebb, ortofoto och fastighetsindelning kan läggas till som kartlager via lagerhanteraren. Dessa hämtas via WMS-tjänster från Lantmäteriet.</p>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <h2>Kända begränsningar</h2>
+            </div>
+            <ul style="margin-left: 1.5rem; color: #475569; line-height: 1.9;">
+              <li>Information om län och kommun kan skilja sig mellan Nominatim och Lantmäteriets polygondata, särskilt för punkter nära en gräns</li>
+              <li>Socken visas i popup-rutan endast om socken-lagret är tänt i kartans lagerhanterare</li>
+              <li>Nominatim kan ge tomma svar för punkter i hav eller glesbefolkade områden</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -324,36 +414,7 @@
     </div>
   </div>
 
-  <!-- Data Sources Modal -->
-  <div id="sourcesModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Datakällor</h3>
-        <button class="modal-close" onclick="closeModal('sources')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p>Bakgrundskartan kommer från OpenStreetMap. Information om adress, kommun och län hämtas via Nominatims geokodningstjänst.</p>
-        
-        <h4>Lagren som kan tändas och släckas i kartan kommer från:</h4>
-        <ul>
-          <li>Län och kommun: Lantmäteriets öppna data 'Kommun, län och rike'</li>
-          <li>Landskap: Lantmäteriets öppna data 'Distriktsindelning'</li>
-          <li>Socken: Lantmäteriets öppna data 'Socken och stad'</li>
-          <li>Lappmarkerna är avgränsade med hjälp av kommungränser</li>
-        </ul>
-        
-        <p><em>Information om län och kommun kan skilja sig mellan OpenStreetMap/Nominatim och Lantmäteriets data, särskilt om punkten ligger mycket nära en gräns.</em></p>
-        
-        <hr style="margin: 1.5rem 0; border: none; border-top: 2px solid #e2e8f0;">
-        
-        <h4>Projektet</h4>
-        <p>Detta är ett öppet projekt. Du kan se källkoden och bidra på GitHub.</p>
-        <a href="https://github.com/alotsa/sverige-geodata" target="_blank" class="github-icon-link" title="View on GitHub">
-          <i class="fab fa-github"></i>
-        </a>
-      </div>
-    </div>
-  </div>
+
 
   <!-- Scripts - Load in proper order -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
