@@ -16,7 +16,6 @@ window.addEventListener('load', function() {
   initApp();
 });
 
-// Global variables
 let geojsonLan, geojsonKommun, geojsonLandskap, geojsonSockenstad;
 let currentMarkersGroup;
 let map;
@@ -24,10 +23,7 @@ let overlayMaps = {};
 let layerControl;
 
 function initApp() {
-  // Initialize map first
   initializeMap();
-  
-  // Then load GeoJSON data
   loadGeoJSON();
 }
 
@@ -59,10 +55,7 @@ function loadGeoJSON() {
     geojsonSockenstad = sockenstadData;
     console.log("✅ GeoJSON-lager inlästa och redo för användning!");
     
-    // Add GeoJSON layers to map after data is loaded
     addGeoJsonLayers();
-    
-
   })
   .catch(err => {
     console.error("❌ Fel vid inläsning av GeoJSON:", err);
@@ -70,7 +63,6 @@ function loadGeoJSON() {
   });
 }
 
-// Initialize map
 function initializeMap() {
   console.log('Initializing map...');
 
@@ -145,7 +137,6 @@ function initializeMap() {
       `Lat: ${e.latlng.lat.toFixed(5)}, Lon: ${e.latlng.lng.toFixed(5)}`;
   });
 
-  // Map click handler
   map.on('click', function (e) {
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
@@ -155,7 +146,6 @@ function initializeMap() {
   setTimeout(() => map.invalidateSize(), 500);
 }
 
-// Add GeoJSON layers to map
 function addGeoJsonLayers() {
   console.log('Adding GeoJSON layers to map...');
   
@@ -187,21 +177,13 @@ window.openTab = function(tabId) {
   document.querySelectorAll(".tab-content").forEach(tab => {
     tab.classList.remove('active');
   });
-  
+
   document.querySelectorAll(".tab-button").forEach(btn => {
     btn.classList.remove('active');
+    if (btn.dataset.tab === tabId) btn.classList.add('active');
   });
 
   document.getElementById(tabId).classList.add('active');
-  
-  // Find and activate the corresponding button
-  document.querySelectorAll('.tab-button').forEach(btn => {
-    if (btn.textContent.includes('Karta') && tabId === 'main') btn.classList.add('active');
-    if (btn.textContent.includes('Konvertera') && tabId === 'converter') btn.classList.add('active');
-    if (btn.textContent.includes('Visa på karta') && tabId === 'visa-pa-karta') btn.classList.add('active');
-    if (btn.textContent.includes('Hämta geodata') && tabId === 'hämta-geodata') btn.classList.add('active');
-    if (btn.textContent.includes('Dokumentation') && tabId === 'dokumentation') btn.classList.add('active');
-  });
 
   if (tabId === "main" && typeof map !== "undefined") {
     setTimeout(() => map.invalidateSize(), 300);
@@ -215,7 +197,6 @@ window.openTab = function(tabId) {
   }
 }
 
-// Modal functions
 window.openModal = function(modalName) {
   if (modalName === 'tips') {
     document.getElementById('tipsModal').classList.add('active');
@@ -235,7 +216,6 @@ document.addEventListener('click', function(event) {
   }
 });
 
-// Filters toggle
 window.toggleFilters = function() {
   const content = document.getElementById('filters-content');
   const arrow = document.getElementById('filter-arrow');
@@ -243,7 +223,6 @@ window.toggleFilters = function() {
   arrow.textContent = content.classList.contains('active') ? '▲' : '▼';
 }
 
-// Helper function to format landskap display
 function formatLandskap(landskapName) {
   if (!landskapName) return "";
   
@@ -255,7 +234,6 @@ function formatLandskap(landskapName) {
   return landskapName;
 }
 
-// Convert DD to DMS string
 function ddToDMS(dd, isLat) {
   const dir = isLat ? (dd >= 0 ? 'N' : 'S') : (dd >= 0 ? 'E' : 'W');
   dd = Math.abs(dd);
@@ -266,7 +244,6 @@ function ddToDMS(dd, isLat) {
   return `${deg}°${String(min).padStart(2,'0')}'${sec.toFixed(2).padStart(5,'0')}"${dir}`;
 }
 
-// Convert DD to DDM string
 function ddToDDM(dd, isLat) {
   const dir = isLat ? (dd >= 0 ? 'N' : 'S') : (dd >= 0 ? 'E' : 'W');
   dd = Math.abs(dd);
@@ -275,13 +252,11 @@ function ddToDDM(dd, isLat) {
   return `${deg}°${min.toFixed(4).padStart(7,'0')}'${dir}`;
 }
 
-// Show location info with all three coordinate systems
 async function showAllInfo(lat, lng) {
   try {
-    // Convert coordinates to all three systems first
     let rt90Coords, swerefCoords;
     try {
-      rt90Coords = proj4("EPSG:4326", "EPSG:3847", [lng, lat]);
+      rt90Coords = proj4("EPSG:4326", "RT90", [lng, lat]);
       swerefCoords = proj4("EPSG:4326", "EPSG:3006", [lng, lat]);
     } catch (e) {
       console.error("Coordinate conversion error:", e);
@@ -336,7 +311,6 @@ async function showAllInfo(lat, lng) {
       ? "<em>Ingen polygonträff i aktiva lager</em>"
       : infoList.join("") + "<br><strong>Källa:</strong> Lantmäteriet (utom lappmarker som avgränsas med kommungränser)";
 
-    // Build coordinate display with all three systems
     let coordText = `<strong>WGS84:</strong> ${lat.toFixed(5)}, ${lng.toFixed(5)} <span onclick="copyCoordinates(${lat}, ${lng})" style="cursor: pointer; padding-left: 0.25rem; color: #1e293b;" title="Kopiera koordinater"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2z"/></svg></span><br>`;
     if (rt90Coords) {
       coordText += `<strong>RT90 2.5 gon V:</strong> ${Math.round(rt90Coords[1])}, ${Math.round(rt90Coords[0])}<br>`;
@@ -541,7 +515,7 @@ function performSearch() {
       lat = parts[0];
       lng = parts[1];
     } else if (isLikelyRT90(parts)) {
-      [lng, lat] = proj4("EPSG:3847", "EPSG:4326", [parts[1], parts[0]]);
+      [lng, lat] = proj4("RT90", "EPSG:4326", [parts[1], parts[0]]);
     } else if (isLikelySWEREF99(parts)) {
       [lng, lat] = proj4("EPSG:3006", "EPSG:4326", [parts[1], parts[0]]);
     } else {
@@ -652,11 +626,10 @@ document.getElementById('clearPinsButton').addEventListener('click', function ()
  * COORDINATE CONVERSION
  ****************************************************/
 
-// Define projections
 proj4.defs([
   ["EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs"],
   ["EPSG:3006", "+proj=utm +zone=33 +ellps=GRS80 +datum=WGS84 +units=m +no_defs"],
-  ["EPSG:3847", "+proj=tmerc +lat_0=0 +lon_0=15.806284529 +k=1.00000561024 +x_0=1500064.274 +y_0=-667.711 +ellps=bessel +datum=WGS84 +units=m +towgs84=-414.1,41.3,603.1,0.855,2.141,7.023,0"]
+  ["RT90", "+proj=tmerc +lat_0=0 +lon_0=15.806284529 +k=1.00000561024 +x_0=1500064.274 +y_0=-667.711 +ellps=bessel +datum=WGS84 +units=m +towgs84=-414.1,41.3,603.1,0.855,2.141,7.023,0"]
 ]);
 
 function showConverterError(message) {
@@ -692,7 +665,7 @@ function convertCoordinates() {
       return;
     }
     let [y, x] = parts;
-    wgs84 = proj4("EPSG:3847", "EPSG:4326", [x, y]);
+    wgs84 = proj4("RT90", "EPSG:4326", [x, y]);
     sweref = proj4("EPSG:4326", "EPSG:3006", wgs84);
   }
   else if (swerefInput) {
@@ -704,7 +677,7 @@ function convertCoordinates() {
     }
     let [y, x] = parts;
     wgs84 = proj4("EPSG:3006", "EPSG:4326", [x, y]);
-    rt90 = proj4("EPSG:4326", "EPSG:3847", wgs84);
+    rt90 = proj4("EPSG:4326", "RT90", wgs84);
   }
   else if (wgs84Input) {
     // Accept both comma and space as separators
@@ -714,7 +687,7 @@ function convertCoordinates() {
       return;
     }
     let [lat, lon] = parts;
-    rt90 = proj4("EPSG:4326", "EPSG:3847", [lon, lat]);
+    rt90 = proj4("EPSG:4326", "RT90", [lon, lat]);
     sweref = proj4("EPSG:4326", "EPSG:3006", [lon, lat]);
     wgs84 = [lon, lat];
   } else {
@@ -739,6 +712,9 @@ function convertCoordinates() {
  * EXCEL PROCESSING
  ****************************************************/
 
+let storedFileData = null;
+let extraColumnsForExport = [];
+
 function showFileError(message) {
   const el = document.getElementById('fileValidationMessage');
   el.textContent = message;
@@ -748,29 +724,10 @@ function showFileError(message) {
   el.style.color = '#b91c1c';
 }
 
-function showFileWarning(message) {
-  const el = document.getElementById('fileValidationMessage');
-  el.textContent = message;
-  el.style.display = 'block';
-  el.style.background = '#fffbeb';
-  el.style.borderColor = '#fcd34d';
-  el.style.color = '#92400e';
-}
-
 function clearFileMessage() {
   const el = document.getElementById('fileValidationMessage');
   el.style.display = 'none';
   el.textContent = '';
-}
-
-function normalizeKeys(rows) {
-  return rows.map(row => {
-    const normalized = {};
-    Object.keys(row).forEach(key => {
-      normalized[key.toLowerCase().trim()] = row[key];
-    });
-    return normalized;
-  });
 }
 
 function parseCoord(value) {
@@ -781,7 +738,7 @@ function parseCoord(value) {
   return { val: parseFloat(normalized), hadComma };
 }
 
-function readAndProcessExcel(file) {
+function readFileForMapping(file) {
   const reader = new FileReader();
 
   reader.onload = function (e) {
@@ -791,66 +748,136 @@ function readAndProcessExcel(file) {
       if (isCsv) {
         const text = new TextDecoder('utf-8').decode(new Uint8Array(e.target.result));
         const workbook = XLSX.read(text, { type: "string" });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+        jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
       } else {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+        jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
       }
     } catch (err) {
       showFileError(`Kunde inte läsa filen: ${err.message}`);
       return;
     }
 
-    // Normalisera kolumnnamn till gemener
-    jsonData = normalizeKeys(jsonData);
-
-    // Validera att lat och lon finns
     if (jsonData.length === 0) {
       showFileError("Filen är tom eller saknar data.");
       return;
     }
-    const firstRow = jsonData[0];
-    if (!('lat' in firstRow) || !('lon' in firstRow)) {
-      const missing = [];
-      if (!('lat' in firstRow)) missing.push('lat');
-      if (!('lon' in firstRow)) missing.push('lon');
-      showFileError(`Filen saknar obligatoriska kolumner: ${missing.join(', ')}. Kontrollera att kolumnnamnen är korrekta.`);
-      return;
-    }
 
-    // Varna om id saknas
-    if (!('id' in firstRow)) {
-      showFileWarning("Ingen id-kolumn hittades – radnummer används som id i resultatfilen.");
-    } else {
-      clearFileMessage();
-    }
-
-    console.log("✅ Excel-data inläst:", jsonData);
-    processRows(jsonData);
+    storedFileData = jsonData;
+    clearFileMessage();
+    showColumnMapper(Object.keys(jsonData[0]), jsonData);
   };
 
   reader.readAsArrayBuffer(file);
 }
 
-document.getElementById("processBtn").addEventListener("click", () => {
-  const fileInput = document.getElementById("excelFile");
-  if (!fileInput.files || fileInput.files.length === 0) {
-    showFileError("Välj en fil först.");
+function populateColumnSelects(headers, idElId, latElId, lonElId) {
+  const lower = h => h.toLowerCase().trim();
+  const idGuesses  = ['id', 'nr', 'nummer', 'object_id', 'objectid', 'kat_nr', 'katalognr', 'lokal_id'];
+  const latGuesses = ['lat', 'latitude', 'latitud', 'y', 'wgs84_lat', 'lat_wgs84', 'n', 'north'];
+  const lonGuesses = ['lon', 'lng', 'long', 'longitude', 'longitud', 'x', 'wgs84_lon', 'lon_wgs84', 'e', 'east'];
+
+  const mapId  = document.getElementById(idElId);
+  const mapLat = document.getElementById(latElId);
+  const mapLon = document.getElementById(lonElId);
+
+  mapId.innerHTML  = '<option value="">— Inget id-fält —</option>';
+  mapLat.innerHTML = '<option value="">Välj kolumn …</option>';
+  mapLon.innerHTML = '<option value="">Välj kolumn …</option>';
+
+  headers.forEach(h => {
+    const esc = h.replace(/"/g, '&quot;');
+    mapId.innerHTML  += `<option value="${esc}">${h}</option>`;
+    mapLat.innerHTML += `<option value="${esc}">${h}</option>`;
+    mapLon.innerHTML += `<option value="${esc}">${h}</option>`;
+  });
+
+  const idMatch  = headers.find(h => idGuesses.includes(lower(h)));
+  const latMatch = headers.find(h => latGuesses.includes(lower(h)));
+  const lonMatch = headers.find(h => lonGuesses.includes(lower(h)));
+
+  if (idMatch)  mapId.value  = idMatch;
+  if (latMatch) mapLat.value = latMatch;
+  if (lonMatch) mapLon.value = lonMatch;
+}
+
+function showColumnMapper(headers, jsonData) {
+  populateColumnSelects(headers, 'mapId', 'mapLat', 'mapLon');
+
+  updateMappingPreview(jsonData[0]);
+
+  ['mapId', 'mapLat', 'mapLon'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => updateMappingPreview(jsonData[0]));
+  });
+
+  document.getElementById('columnMappingPanel').style.display = 'block';
+}
+
+function updateMappingPreview(firstRow) {
+  const preview = document.getElementById('mappingPreview');
+  const latCol  = document.getElementById('mapLat').value;
+  const lonCol  = document.getElementById('mapLon').value;
+  const idCol   = document.getElementById('mapId').value;
+
+  if (!latCol || !lonCol) {
+    preview.textContent = '';
     return;
   }
-  readAndProcessExcel(fileInput.files[0]);
-});
+
+  const idVal  = idCol ? firstRow[idCol] : '(radnummer)';
+  const latVal = firstRow[latCol] ?? '–';
+  const lonVal = firstRow[lonCol] ?? '–';
+
+  preview.innerHTML = `<strong>Förhandsgranskning (rad 1):</strong> id = ${idVal}, lat = ${latVal}, lon = ${lonVal}`;
+}
+
+function startProcessingWithMapping() {
+  const latCol = document.getElementById('mapLat').value;
+  const lonCol = document.getElementById('mapLon').value;
+  const idCol  = document.getElementById('mapId').value;
+
+  if (!latCol || !lonCol) {
+    showFileError("Du måste välja kolumner för latitud och longitud.");
+    return;
+  }
+  if (!storedFileData || storedFileData.length === 0) {
+    showFileError("Ingen fil inläst.");
+    return;
+  }
+
+  // Alla kolumner utom de tre mappade följer med i exporten
+  const mappedCols = [latCol, lonCol, ...(idCol ? [idCol] : [])];
+  extraColumnsForExport = Object.keys(storedFileData[0]).filter(c => !mappedCols.includes(c));
+
+  // Bygg om raderna så att processRows kan använda row.lat / row.lon / row.id
+  const remappedRows = storedFileData.map((row, i) => {
+    const newRow = {};
+    newRow.id  = idCol ? row[idCol] : '';
+    newRow.lat = row[latCol];
+    newRow.lon = row[lonCol];
+    extraColumnsForExport.forEach(col => { newRow[col] = row[col]; });
+    return newRow;
+  });
+
+  processRows(remappedRows);
+}
+
+document.getElementById("processBtn").addEventListener("click", startProcessingWithMapping);
 
 document.getElementById("excelFile").addEventListener("change", function (e) {
   const fileNameDisplay = document.getElementById("selectedFileName");
-  fileNameDisplay.textContent = e.target.files.length > 0
-    ? `Vald fil: ${e.target.files[0].name}`
-    : "";
+  const mappingPanel    = document.getElementById("columnMappingPanel");
+
+  if (e.target.files.length > 0) {
+    fileNameDisplay.textContent = `Vald fil: ${e.target.files[0].name}`;
+    mappingPanel.style.display  = 'none';
+    storedFileData = null;
+    readFileForMapping(e.target.files[0]);
+  } else {
+    fileNameDisplay.textContent = '';
+    mappingPanel.style.display  = 'none';
+  }
 });
 
 async function processRows(rows) {
@@ -905,81 +932,61 @@ async function processRows(rows) {
     }
 
     if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-      // Ogiltiga koordinater - kan inte bearbetas alls
       console.warn("⚠️ Ogiltiga koordinater i rad:", row);
-      row.lan = "";
-      row.kommun = "";
-      row.landskap = "";
-      row.socken = "";
-      row.adress = "";
-      row.land = "";
+      row.geo_lan = ""; row.geo_kommun = ""; row.geo_landskap = "";
+      row.geo_socken = ""; row.geo_adress = ""; row.geo_land = "";
       felmeddelande = "Ogiltiga koordinater";
     } else if (lat === 0 && lon === 0) {
-      // Koordinaten (0, 0) är troligt datainmatningsfel
       console.warn("⚠️ Koordinat (0, 0) i rad:", row);
-      row.lan = "";
-      row.kommun = "";
-      row.landskap = "";
-      row.socken = "";
-      row.adress = "";
-      row.land = "";
+      row.geo_lan = ""; row.geo_kommun = ""; row.geo_landskap = "";
+      row.geo_socken = ""; row.geo_adress = ""; row.geo_land = "";
       felmeddelande = "Koordinaten (0, 0) är troligen ett inmatningsfel";
     } else {
-      // Giltiga koordinater - försök alltid slå upp svenska polygoner
-      row.lan = polygonLookup(lon, lat, geojsonLan, "lan") || "";
-      row.kommun = polygonLookup(lon, lat, geojsonKommun, "kommun") || "";
-
-      // Get landskap and format it if it's a lappmark
+      row.geo_lan     = polygonLookup(lon, lat, geojsonLan, "lan") || "";
+      row.geo_kommun  = polygonLookup(lon, lat, geojsonKommun, "kommun") || "";
       const rawLandskap = polygonLookup(lon, lat, geojsonLandskap, "Landskap-lappmark") || "";
-      row.landskap = formatLandskap(rawLandskap);
-
-      row.socken = polygonLookup(lon, lat, geojsonSockenstad, "sockenstadnamn") || "";
+      row.geo_landskap = formatLandskap(rawLandskap);
+      row.geo_socken  = polygonLookup(lon, lat, geojsonSockenstad, "sockenstadnamn") || "";
 
       if (dataSource === "both") {
         try {
           const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
           const response = await fetch(nominatimUrl, {
-          headers: { "User-Agent": "geoLocus/1.0 (https://geolocus.nrm.se)" }
-        });
+            headers: { "User-Agent": "geoLocus/1.0 (https://geolocus.nrm.se)" }
+          });
 
           if (!response.ok) throw new Error(`Nominatim svarade med statuskod ${response.status}`);
 
           const data = await response.json();
 
           if (!data || !data.address) {
-            row.adress = "";
-            row.land = "";
+            row.geo_adress = ""; row.geo_land = "";
             felmeddelande = "Nominatim returnerade ingen adressdata";
           } else if (Object.keys(data.address).length === 0) {
-            row.adress = "";
-            row.land = "";
+            row.geo_adress = ""; row.geo_land = "";
             felmeddelande = "Nominatim returnerade ingen adress (punkt i hav eller ödemark?)";
           } else {
-            row.land = data.address.country || "";
-            if (!row.land) felmeddelande = "Nominatim returnerade inget land (punkt i hav eller ödemark?)";
-
+            row.geo_land = data.address.country || "";
+            if (!row.geo_land) felmeddelande = "Nominatim returnerade inget land (punkt i hav eller ödemark?)";
             const fullAddress = data.display_name || "";
-            row.adress = fullAddress
+            row.geo_adress = fullAddress
               ? fullAddress.split(", ").reverse().join(", ")
               : "";
           }
 
-          // Add small delay to respect API rate limits
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Nominatim usage policy: max 1 request/second
 
         } catch (error) {
           console.error("Fel vid hämtning av adress från Nominatim:", error);
-          row.adress = "";
-          row.land = "";
+          row.geo_adress = ""; row.geo_land = "";
           felmeddelande = `Nominatim API-fel: ${error.message}`;
         }
       } else {
-        row.adress = "";
-        row.land = "";
+        row.geo_adress = ""; row.geo_land = "";
       }
     }
 
-    row.felmeddelande = felmeddelande;
+    row.geo_felmeddelande = felmeddelande;
   }
   
   // Show completion
@@ -1007,6 +1014,8 @@ function polygonLookup(lon, lat, geojson, propertyName) {
 
   for (const feature of geojson.features) {
     if (!feature.geometry) continue;
+    const [minX, minY, maxX, maxY] = feature._bbox || (feature._bbox = turf.bbox(feature));
+    if (lon < minX || lon > maxX || lat < minY || lat > maxY) continue;
     if (turf.booleanPointInPolygon(point, feature)) {
       return feature.properties[propertyName];
     }
@@ -1021,16 +1030,25 @@ function generateAndDownloadExcel(rows) {
     return;
   }
 
+  const geoColumns = [
+    "geo_lan", "geo_landskap", "geo_kommun", "geo_socken",
+    "geo_land", "geo_adress", "geo_felmeddelande"
+  ];
+
+  // Bygg kolumnordning: id, lat, lon, extrakolumner, geo-kolumner
   const columnHeaders = [
-    "id", "lat", "lon", "land", "lan", "landskap", "kommun", "socken", "adress", "felmeddelande"
+    "id", "lat", "lon",
+    ...extraColumnsForExport,
+    ...geoColumns
   ];
 
   const orderedRows = rows.map((row, index) => {
     let orderedRow = {};
-    orderedRow["id"] = (row.id !== undefined && row.id !== "") ? row.id : index + 1;
-    columnHeaders.forEach(col => {
-      orderedRow[col] = row[col] || "";
-    });
+    orderedRow["id"]  = (row.id !== undefined && row.id !== "") ? row.id : index + 1;
+    orderedRow["lat"] = row.lat ?? "";
+    orderedRow["lon"] = row.lon ?? "";
+    extraColumnsForExport.forEach(col => { orderedRow[col] = row[col] ?? ""; });
+    geoColumns.forEach(col => { orderedRow[col] = row[col] || ""; });
     return orderedRow;
   });
 
@@ -1041,8 +1059,9 @@ function generateAndDownloadExcel(rows) {
   const infoData = [
     ["Info"],
     [""],
-    ["Data i kolumnerna land och adress hämtas från OpenStreetMap via Nominatims geokodningstjänst."],
-    ["Kolumnerna län, landskap, kommun, och socken hämtas från lager nedladdade från Lantmäteriet år 2025."]
+    ["Data i kolumnerna geo_land och geo_adress hämtas från OpenStreetMap via Nominatims geokodningstjänst."],
+    ["Kolumnerna geo_lan, geo_landskap, geo_kommun och geo_socken hämtas från lager nedladdade från Lantmäteriet år 2025."],
+    ["Prefix 'geo_' används för att undvika namnkonflikter med befintliga kolumner i ursprungsfilen."]
   ];
   const infoSheet = XLSX.utils.aoa_to_sheet(infoData);
   XLSX.utils.book_append_sheet(workbook, infoSheet, "info");
@@ -1059,7 +1078,7 @@ function generateAndDownloadExcel(rows) {
   document.body.removeChild(downloadLink);
   URL.revokeObjectURL(url);
 
-  console.log("✅ Excel-fil med rätt kolumnordning och informationsblad skapad och nedladdad!");
+  console.log("✅ Excel-fil skapad och nedladdad!");
 }
 
 /****************************************************
@@ -1105,28 +1124,26 @@ function initUploadMap() {
     maxZoom: 17
   });
 
+  // GeoJSON-lager (återanvänder redan inläst data)
+  const kommunLayer = L.geoJSON(geojsonKommun, { style: { color: "#10b981", weight: 1, fillOpacity: 0 } });
+  const lanLayer = L.geoJSON(geojsonLan, { style: { color: "#3b82f6", weight: 2, fillOpacity: 0 } });
+  const landskapLayer = L.geoJSON(geojsonLandskap, { style: { color: "#8b5cf6", weight: 1, fillOpacity: 0 } });
+  const socknarLayer = L.geoJSON(geojsonSockenstad, { style: { color: "#000000", weight: 2, fillOpacity: 0 } });
+
   let baseMaps = {};
   let overlayMaps = {
     "Topowebb": topowebb,
-    "Ortofoto": ortofoto
+    "Ortofoto": ortofoto,
+    "Kommun": kommunLayer,
+    "Län": lanLayer,
+    "Landskap": landskapLayer,
+    "Socknar": socknarLayer
   };
 
-  // GeoJSON-lager – läggs till direkt om datan finns
-  if (geojsonKommun) {
-    const kommunLayer = L.geoJSON(geojsonKommun, { style: { color: "#10b981", weight: 1, fillOpacity: 0 } });
-    const lanLayer = L.geoJSON(geojsonLan, { style: { color: "#3b82f6", weight: 2, fillOpacity: 0 } });
-    const landskapLayer = L.geoJSON(geojsonLandskap, { style: { color: "#8b5cf6", weight: 1, fillOpacity: 0 } });
-    const socknarLayer = L.geoJSON(geojsonSockenstad, { style: { color: "#000000", weight: 2, fillOpacity: 0 } });
-    overlayMaps["Kommun"] = kommunLayer;
-    overlayMaps["Län"] = lanLayer;
-    overlayMaps["Landskap"] = landskapLayer;
-    overlayMaps["Socknar"] = socknarLayer;
-    kommunLayer.addTo(mapUpload);
-    lanLayer.addTo(mapUpload);
-    landskapLayer.addTo(mapUpload);
-  } else {
-    console.warn("GeoJSON ej inläst än – lager läggs till när data finns");
-  }
+  // Lägg till standardlager
+  kommunLayer.addTo(mapUpload);
+  lanLayer.addTo(mapUpload);
+  landskapLayer.addTo(mapUpload);
 
   L.control.layers(baseMaps, overlayMaps, {
     position: 'bottomright',
@@ -1136,34 +1153,40 @@ function initUploadMap() {
   L.control.scale().addTo(mapUpload);
 
   // Add coordinate display
+  let uploadCoordDiv;
   const coordDisplay = L.control({ position: "bottomleft" });
   coordDisplay.onAdd = function() {
-    const div = L.DomUtil.create("div", "coordinate-display");
-    div.innerHTML = "Lat: --, Lon: --";
-    return div;
+    uploadCoordDiv = L.DomUtil.create("div", "coordinate-display");
+    uploadCoordDiv.innerHTML = "Lat: --, Lon: --";
+    return uploadCoordDiv;
   };
   coordDisplay.addTo(mapUpload);
 
   mapUpload.on("mousemove", function(e) {
-    const coordDisplays = document.querySelectorAll(".coordinate-display");
-    if (coordDisplays.length > 1) {
-      coordDisplays[1].innerHTML = `Lat: ${e.latlng.lat.toFixed(5)}, Lon: ${e.latlng.lng.toFixed(5)}`;
+    if (uploadCoordDiv) {
+      uploadCoordDiv.innerHTML = `Lat: ${e.latlng.lat.toFixed(5)}, Lon: ${e.latlng.lng.toFixed(5)}`;
     }
   });
 
   setTimeout(() => mapUpload.invalidateSize(), 500);
 }
 
-// File upload handler - läs och visa direkt när fil väljs
+// File upload handler - läs kolumner och visa mappningspanel
+let storedCoordFileData = null;
+
 document.getElementById('coordFile').addEventListener('change', function(e) {
   const fileNameDisplay = document.getElementById('coordFileName');
-  
+  const mappingPanel = document.getElementById('coordMappingPanel');
+
   if (e.target.files.length > 0) {
     const file = e.target.files[0];
     fileNameDisplay.textContent = `Vald fil: ${file.name}`;
-    readAndDisplayCoordinates(file);
+    mappingPanel.style.display = 'none';
+    storedCoordFileData = null;
+    readCoordFileForMapping(file);
   } else {
     fileNameDisplay.textContent = "";
+    mappingPanel.style.display = 'none';
   }
 });
 
@@ -1174,19 +1197,49 @@ document.getElementById('clearMapPinsBtn').addEventListener('click', function() 
   }
 });
 
-function readAndDisplayCoordinates(file) {
+document.getElementById('showOnMapBtn').addEventListener('click', function() {
+  const latCol = document.getElementById('coordMapLat').value;
+  const lonCol = document.getElementById('coordMapLon').value;
+  const idCol  = document.getElementById('coordMapId').value;
+
+  if (!latCol || !lonCol) {
+    alert("Du måste välja kolumner för latitud och longitud.");
+    return;
+  }
+
+  const remappedRows = storedCoordFileData.map((row, i) => ({
+    id:  idCol ? row[idCol] : i + 1,
+    lat: row[latCol],
+    lon: row[lonCol]
+  }));
+
+  displayCoordinatesOnMap(remappedRows);
+});
+
+function readCoordFileForMapping(file) {
   const reader = new FileReader();
 
   reader.onload = function(e) {
     try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+      const isCsv = file.name.toLowerCase().endsWith('.csv');
+      let jsonData;
+      if (isCsv) {
+        const text = new TextDecoder('utf-8').decode(new Uint8Array(e.target.result));
+        const workbook = XLSX.read(text, { type: "string" });
+        jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+      } else {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+      }
 
-      console.log("✅ Koordinatfil inläst:", jsonData);
-      displayCoordinatesOnMap(jsonData);
+      if (jsonData.length === 0) {
+        alert("Filen är tom eller saknar data.");
+        return;
+      }
+
+      storedCoordFileData = jsonData;
+      showCoordColumnMapper(Object.keys(jsonData[0]));
     } catch (error) {
       console.error("Fel vid inläsning av fil:", error);
       alert("Kunde inte läsa filen. Kontrollera att den är i rätt format.");
@@ -1194,6 +1247,11 @@ function readAndDisplayCoordinates(file) {
   };
 
   reader.readAsArrayBuffer(file);
+}
+
+function showCoordColumnMapper(headers) {
+  populateColumnSelects(headers, 'coordMapId', 'coordMapLat', 'coordMapLon');
+  document.getElementById('coordMappingPanel').style.display = 'block';
 }
 
 async function displayCoordinatesOnMap(rows) {
@@ -1216,7 +1274,7 @@ async function displayCoordinatesOnMap(rows) {
     const lat = parseFloat(row.lat);
     const lon = parseFloat(row.lon);
 
-    if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+    if (isNaN(lat) || isNaN(lon)) {
       console.warn("Ogiltig koordinat:", row);
       continue;
     }
@@ -1224,7 +1282,7 @@ async function displayCoordinatesOnMap(rows) {
     validPoints++;
 
     // Convert coordinates (local, instant)
-    const rt90Coords = proj4("EPSG:4326", "EPSG:3847", [lon, lat]);
+    const rt90Coords = proj4("EPSG:4326", "RT90", [lon, lat]);
     const swerefCoords = proj4("EPSG:4326", "EPSG:3006", [lon, lat]);
 
     // Get polygon data (local, instant)
@@ -1317,11 +1375,14 @@ async function displayCoordinatesOnMap(rows) {
   uploadedMarkersGroup.addTo(mapUpload);
 
   if (validPoints > 0) {
-    // Zoom to show all markers
-    mapUpload.fitBounds(uploadedMarkersGroup.getBounds(), { padding: [50, 50] });
-    showCopyFeedback(`${validPoints} punkter laddade på kartan!`);
+    try {
+      mapUpload.fitBounds(uploadedMarkersGroup.getBounds(), { padding: [50, 50] });
+    } catch(e) {
+      console.warn("fitBounds misslyckades:", e);
+    }
+    alert(`${validPoints} punkter laddade på kartan!\n\nAdresser hämtas automatiskt när du klickar på en markör.`);
   } else {
-    showCopyFeedback("Inga giltiga koordinater hittades i filen.");
+    alert("Inga giltiga koordinater hittades i filen.");
   }
 }
 

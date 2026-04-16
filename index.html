@@ -32,20 +32,20 @@
         </div>
 
         <!-- Mobile hamburger button -->
-        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+        <button class="mobile-menu-toggle" aria-label="Meny" onclick="toggleMobileMenu()">☰</button>
         
         <nav class="tab-nav" id="mobileTabNav">
-          <button class="tab-button active" onclick="openTab('main'); closeMobileMenu()">Karta</button>
-          <button class="tab-button" onclick="openTab('visa-pa-karta'); closeMobileMenu()">Visa koordinater på karta</button>
-          <button class="tab-button" onclick="openTab('hämta-geodata'); closeMobileMenu()">Hämta geodata</button>
-          <button class="tab-button" onclick="openTab('converter'); closeMobileMenu()">Konvertera</button>
-          <button class="tab-button" onclick="openTab('dokumentation'); closeMobileMenu()">Dokumentation</button>
+          <button class="tab-button active" data-tab="main" onclick="openTab('main'); closeMobileMenu()">Karta</button>
+          <button class="tab-button" data-tab="visa-pa-karta" onclick="openTab('visa-pa-karta'); closeMobileMenu()">Visa koordinater på karta</button>
+          <button class="tab-button" data-tab="hämta-geodata" onclick="openTab('hämta-geodata'); closeMobileMenu()">Hämta geodata</button>
+          <button class="tab-button" data-tab="converter" onclick="openTab('converter'); closeMobileMenu()">Konvertera</button>
+          <button class="tab-button" data-tab="dokumentation" onclick="openTab('dokumentation'); closeMobileMenu()">Dokumentation</button>
         </nav>
       </div>
     </header>
 
     <!-- MAIN CONTENT AREA -->
-    <div class="content-area">
+    <main class="content-area">
       
       <!-- TAB 1: KARTA (Full-screen map) -->
       <div id="main" class="tab-content active">
@@ -140,7 +140,7 @@
             </div>
           </div>
 
-          <!-- Info buttons - EMOJI ONLY ON MOBILE -->
+          <!-- Info buttons - text label hidden on mobile via CSS -->
           <div class="info-buttons">
             <button class="info-btn" onclick="openModal('tips')" title="Söktips">
               💡<span class="info-btn-text"> Söktips</span>
@@ -192,19 +192,41 @@
           <div class="upload-controls">
             <div class="upload-panel">
               <h3>Ladda upp koordinater</h3>
-              <p style="margin-bottom: 1rem; font-size: 0.875rem; color: #64748b;">
-                Ladda upp en Excel- eller CSV-fil med kolumnerna: <code>lat</code>, <code>lon</code>, <code>id</code>
-              </p>
-              
+
               <div class="upload-area-compact">
                 <label for="coordFile" class="custom-file-upload">
                   Välj fil
                 </label>
                 <input type="file" id="coordFile" accept=".xlsx,.xls,.csv" />
               </div>
-              
+
               <span id="coordFileName" class="file-info"></span>
-              
+
+              <!-- Kolumnmappning - visas efter filval -->
+              <div id="coordMappingPanel" style="display:none; margin-top: 0.75rem;">
+                <div style="display: grid; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <div>
+                    <label style="display:block; font-size:0.75rem; font-weight:600; color:#475569; margin-bottom:0.2rem;">
+                      ID-kolumn <span style="font-weight:400; color:#64748b;">(valfritt)</span>
+                    </label>
+                    <select id="coordMapId" style="width:100%;"></select>
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:0.75rem; font-weight:600; color:#475569; margin-bottom:0.2rem;">
+                      Latitud-kolumn <span style="color:#ef4444;">*</span>
+                    </label>
+                    <select id="coordMapLat" style="width:100%;"></select>
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:0.75rem; font-weight:600; color:#475569; margin-bottom:0.2rem;">
+                      Longitud-kolumn <span style="color:#ef4444;">*</span>
+                    </label>
+                    <select id="coordMapLon" style="width:100%;"></select>
+                  </div>
+                </div>
+                <button id="showOnMapBtn" style="width:100%;">Visa på karta</button>
+              </div>
+
               <button id="clearMapPinsBtn" class="secondary" style="width: 100%; margin-top: 0.75rem;">
                 Rensa kartan
               </button>
@@ -221,7 +243,7 @@
               <h2>Hämta geodata från koordinater</h2>
             </div>
 
-            <p style="margin-bottom: 1.5rem;">Ladda upp en Excel- eller CSV-fil med koordinater och få tillbaka en fil där varje punkt kopplas till geografisk information via Nominatim. Punkter inom Sveriges gränser hämtar också information från Lantmäteriet.</p>
+            <p style="margin-bottom: 1.5rem;">Ladda upp en fil med koordinater och få tillbaka en fil där varje punkt kopplas till geografisk information via Nominatim. Punkter inom Sveriges gränser hämtar också information från Lantmäteriet.</p>
 
             <div class="info-box">
               <h3>Välj datakälla</h3>
@@ -242,10 +264,39 @@
                 Välj fil
               </label>
               <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" />
-              <button id="processBtn">Hämta geodata</button>
               <span id="selectedFileName" class="file-info"></span>
             </div>
             <div id="fileValidationMessage" style="display:none; margin-top: 0.75rem; padding: 0.875rem 1rem; border-radius: 8px; border: 2px solid; font-size: 0.875rem; font-weight: 500;"></div>
+
+            <!-- Kolumnmappning - visas efter filval -->
+            <div id="columnMappingPanel" style="display:none; margin-top: 1rem; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 10px; padding: 1.25rem;">
+              <h3 style="font-size: 1rem; font-weight: 600; color: #0f172a; margin-bottom: 0.5rem;">Välj kolumner</h3>
+              <p style="font-size: 0.875rem; color: #475569; margin-bottom: 1rem;">
+                Ange vilka kolumner som innehåller id, latitud och longitud.
+              </p>
+              <div style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
+                <div>
+                  <label style="display:block; font-size:0.8125rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">
+                    ID-kolumn <span style="font-weight:400; color:#64748b;">(valfritt)</span>
+                  </label>
+                  <select id="mapId" style="width:100%;"></select>
+                </div>
+                <div>
+                  <label style="display:block; font-size:0.8125rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">
+                    Latitud-kolumn <span style="color:#ef4444;">*</span>
+                  </label>
+                  <select id="mapLat" style="width:100%;"></select>
+                </div>
+                <div>
+                  <label style="display:block; font-size:0.8125rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">
+                    Longitud-kolumn <span style="color:#ef4444;">*</span>
+                  </label>
+                  <select id="mapLon" style="width:100%;"></select>
+                </div>
+              </div>
+              <div id="mappingPreview" style="font-size:0.8125rem; color:#64748b; margin-bottom:1rem; min-height: 1.25rem;"></div>
+              <button id="processBtn" style="width:100%;">Hämta geodata</button>
+            </div>
             
             <!-- Progress indicator -->
             <div id="progressContainer" style="display: none; margin-top: 1.5rem;">
@@ -264,34 +315,15 @@
             </div>
 
             <details>
-              <summary>Filformat & krav</summary>
+              <summary>Filformat & information</summary>
               <div class="details-content">
-                <p>Filen du laddar upp ska vara i <strong>Excel- eller CSV-format</strong> (<code>.xlsx</code> eller <code>.xls</code>) eller <strong>CSV-format</strong> (<code>.csv</code>) och innehålla följande kolumner:</p>
-                <table>
-                  <tbody>
-                    <tr>
-                      <td><code>id</code></td>
-                      <td>Unikt rad-ID (t.ex. katalognummer eller lokal-id; <em>valfritt</em>)</td>
-                    </tr>
-                    <tr>
-                      <td><code>lat</code></td>
-                      <td>Latitud i decimaltal</td>
-                    </tr>
-                    <tr>
-                      <td><code>lon</code></td>
-                      <td>Longitud i decimaltal</td>
-                    </tr>
-                  </tbody>
-                </table>
-                
-                <div class="info-box" style="margin-top: 1rem;">
-                  <h3>Viktigt</h3>
-                  <ul>
-                    <li>Kolumnnamnen måste stavas rätt. Versaler eller gemener spelar ingen roll.</li>
-                    <li>Koordinaterna ska vara i WGS84 decimalgrader.</li>
-                    <li>Decimaler kan anges med punkt eller komma.</li>
-                  </ul>
-                </div>
+                <ul style="padding-left: 1.25rem;">
+                  <li>Filen ska vara i Excel- eller CSV-format (<code>.xlsx</code>, <code>.xls</code> eller <code>.csv</code>).</li>
+                  <li>Filen måste innehålla minst två kolumner med koordinater – du väljer själv vilka kolumner som innehåller latitud och longitud.</li>
+                  <li>Koordinaterna ska vara i WGS84 decimalgrader. Decimaler kan anges med punkt eller komma.</li>
+                  <li>Övriga kolumner följer automatiskt med i exporten.</li>
+                  <li>De tillagda kolumnerna får prefix <code>geo_</code> (t.ex. <code>geo_lan</code>, <code>geo_kommun</code>).</li>
+                </ul>
               </div>
             </details>
           </div>
@@ -353,7 +385,7 @@
             <table>
               <tbody>
                 <tr>
-                  <td><strong></strong></td>
+                  <td></td>
                   <td><strong>Produktnamn hos Lantmäteriet</strong></td>
                 </tr>
                 <tr>
@@ -389,7 +421,7 @@
         </div>
       </div>
 
-    </div>
+    </main>
   </div>
 
   <!-- MODALS -->
@@ -398,7 +430,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3>Söktips</h3>
-        <button class="modal-close" onclick="closeModal('tips')">&times;</button>
+        <button class="modal-close" aria-label="Stäng" onclick="closeModal('tips')">&times;</button>
       </div>
       <div class="modal-body">
         <ul>
