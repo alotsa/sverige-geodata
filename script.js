@@ -164,10 +164,10 @@ function addGeoJsonLayers() {
     }
   }
 
-  addGeoJsonLayer(geojsonKommun, "Kommun", { color: "#10b981", weight: 1, fillColor: "green", fillOpacity: 0 });
-  addGeoJsonLayer(geojsonLan, "Län", { color: "#3b82f6", weight: 2, fillColor: "blue", fillOpacity: 0 });
-  addGeoJsonLayer(geojsonLandskap, "Landskap", { color: "#8b5cf6", weight: 1, fillColor: "purple", fillOpacity: 0 });
-  addGeoJsonLayer(geojsonSockenstad, "Socknar", { color: "#000000", weight: 2, fillColor: "none", fillOpacity: 0 }, false);
+  addGeoJsonLayer(geojsonSockenstad, "Socknar", { color: "#808080", weight: 1, fillColor: "none", fillOpacity: 0 }, false);
+  addGeoJsonLayer(geojsonKommun, "Kommun", { color: "#0d9488", weight: 1.5, fillColor: "green", fillOpacity: 0 });
+  addGeoJsonLayer(geojsonLan, "Län", { color: "#2563eb", weight: 1.5, fillColor: "blue", fillOpacity: 0 });
+  addGeoJsonLayer(geojsonLandskap, "Landskap", { color: "#000000", weight: 1.5, fillColor: "purple", fillOpacity: 0 });
   
   console.log('✅ All layers added to map');
 }
