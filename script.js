@@ -1206,6 +1206,7 @@ function initUploadMap() {
       }
       mapUpload.removeLayer(drawRect);
       drawRect = null;
+      if (isDrawMode) window.toggleDrawMode();
     }
     mapUpload.on('mousemove', onMouseMove);
     document.addEventListener('mouseup', finishDraw);
@@ -1320,7 +1321,9 @@ function updateSelectionUI() {
 
 window.toggleDrawMode = function() {
   isDrawMode = !isDrawMode;
-  document.getElementById('drawRectBtn').classList.toggle('active-tool', isDrawMode);
+  const btn = document.getElementById('drawRectBtn');
+  btn.classList.toggle('active-tool', isDrawMode);
+  btn.textContent = isDrawMode ? 'Avsluta markering' : 'Markera område';
   if (isDrawMode) {
     mapUpload.dragging.disable();
     mapUpload.getContainer().style.cursor = 'crosshair';
@@ -1477,18 +1480,6 @@ async function displayCoordinatesOnMap(rows) {
           '<span style="color: #ef4444;">Kunde inte hämta adress</span>'
         ));
       }
-    });
-
-    // Click toggles selection
-    marker.on('click', function() {
-      if (selectedIndices.has(rowIndex)) {
-        selectedIndices.delete(rowIndex);
-        marker.setIcon(makeMarkerIcon(false));
-      } else {
-        selectedIndices.add(rowIndex);
-        marker.setIcon(makeMarkerIcon(true));
-      }
-      updateSelectionUI();
     });
 
     uploadedMarkerData.push({ marker, rowIndex });
