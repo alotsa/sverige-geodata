@@ -726,6 +726,26 @@ table td:first-child {
   background: #f8fafc;
 }
 
+/* ======= UPLOAD MAP MARKERS ======= */
+.map-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+.map-marker--selected {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px white, 0 0 0 5px #ef4444, 0 1px 4px rgba(0,0,0,0.5);
+}
+
+button.active-tool {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
 /* ======= VISA PÅ KARTA TAB ======= */
 #map-view-upload {
   height: 100%;

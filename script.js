@@ -714,6 +714,8 @@ function convertCoordinates() {
 
 let storedFileData = null;
 let extraColumnsForExport = [];
+let originalColumnOrder = [];
+let colMappings = { id: '', lat: '', lon: '' };
 
 function showFileError(message) {
   const el = document.getElementById('fileValidationMessage');
@@ -849,6 +851,8 @@ function startProcessingWithMapping() {
   // Alla kolumner utom de tre mappade följer med i exporten
   const mappedCols = [latCol, lonCol, ...(idCol ? [idCol] : [])];
   extraColumnsForExport = Object.keys(storedFileData[0]).filter(c => !mappedCols.includes(c));
+  originalColumnOrder = Object.keys(storedFileData[0]);
+  colMappings = { id: idCol, lat: latCol, lon: lonCol };
 
   // Bygg om raderna så att processRows kan använda row.lat / row.lon / row.id
   const remappedRows = storedFileData.map((row, i) => {
@@ -1035,19 +1039,16 @@ function generateAndDownloadExcel(rows) {
     "geo_land", "geo_adress", "geo_felmeddelande"
   ];
 
-  // Bygg kolumnordning: id, lat, lon, extrakolumner, geo-kolumner
-  const columnHeaders = [
-    "id", "lat", "lon",
-    ...extraColumnsForExport,
-    ...geoColumns
-  ];
+  const columnHeaders = [...originalColumnOrder, ...geoColumns];
 
   const orderedRows = rows.map((row, index) => {
-    let orderedRow = {};
-    orderedRow["id"]  = (row.id !== undefined && row.id !== "") ? row.id : index + 1;
-    orderedRow["lat"] = row.lat ?? "";
-    orderedRow["lon"] = row.lon ?? "";
-    extraColumnsForExport.forEach(col => { orderedRow[col] = row[col] ?? ""; });
+    const orderedRow = {};
+    originalColumnOrder.forEach(col => {
+      if (col === colMappings.lat) orderedRow[col] = row.lat ?? "";
+      else if (col === colMappings.lon) orderedRow[col] = row.lon ?? "";
+      else if (colMappings.id && col === colMappings.id) orderedRow[col] = (row.id !== undefined && row.id !== "") ? row.id : index + 1;
+      else orderedRow[col] = row[col] ?? "";
+    });
     geoColumns.forEach(col => { orderedRow[col] = row[col] || ""; });
     return orderedRow;
   });
@@ -1087,6 +1088,10 @@ function generateAndDownloadExcel(rows) {
 
 let mapUpload;
 let uploadedMarkersGroup;
+const selectedIndices = new Set();
+let uploadedMarkerData = [];
+let isDrawMode = false;
+let drawRect = null;
 
 // Initialize the upload map when switching to that tab
 function initUploadMap() {
@@ -1166,6 +1171,44 @@ function initUploadMap() {
     if (uploadCoordDiv) {
       uploadCoordDiv.innerHTML = `Lat: ${e.latlng.lat.toFixed(5)}, Lon: ${e.latlng.lng.toFixed(5)}`;
     }
+  });
+
+  // Freehand lasso selection
+  mapUpload.on('mousedown', function(e) {
+    if (!isDrawMode) return;
+    const polyPoints = [e.latlng];
+    drawRect = L.polygon(polyPoints, {
+      color: '#ef4444', weight: 2, dashArray: '5,5',
+      fillColor: '#ef4444', fillOpacity: 0.08, interactive: false
+    }).addTo(mapUpload);
+
+    function onMouseMove(me) {
+      polyPoints.push(me.latlng);
+      drawRect.setLatLngs(polyPoints);
+    }
+
+    function finishDraw() {
+      mapUpload.off('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', finishDraw);
+      if (!drawRect) return;
+      if (polyPoints.length >= 3) {
+        const coords = polyPoints.map(ll => [ll.lng, ll.lat]);
+        coords.push(coords[0]);
+        const turfPoly = turf.polygon([coords]);
+        uploadedMarkerData.forEach(({ marker, rowIndex }) => {
+          const ll = marker.getLatLng();
+          if (turf.booleanPointInPolygon(turf.point([ll.lng, ll.lat]), turfPoly)) {
+            selectedIndices.add(rowIndex);
+            marker.setIcon(makeMarkerIcon(true));
+          }
+        });
+        updateSelectionUI();
+      }
+      mapUpload.removeLayer(drawRect);
+      drawRect = null;
+    }
+    mapUpload.on('mousemove', onMouseMove);
+    document.addEventListener('mouseup', finishDraw);
   });
 
   setTimeout(() => mapUpload.invalidateSize(), 500);
@@ -1254,11 +1297,77 @@ function showCoordColumnMapper(headers) {
   document.getElementById('coordMappingPanel').style.display = 'block';
 }
 
+function makeMarkerIcon(selected) {
+  const size = selected ? 20 : 12;
+  const half = size / 2;
+  return L.divIcon({
+    className: '',
+    html: `<div class="map-marker${selected ? ' map-marker--selected' : ''}"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [half, half],
+    popupAnchor: [0, -half - 4]
+  });
+}
+
+function updateSelectionUI() {
+  const count = selectedIndices.size;
+  const exportBtn = document.getElementById('exportSelectedBtn');
+  const clearBtn = document.getElementById('clearSelectionBtn');
+  exportBtn.disabled = count === 0;
+  exportBtn.textContent = count > 0 ? `Exportera urval (${count})` : 'Exportera urval';
+  clearBtn.disabled = count === 0;
+}
+
+window.toggleDrawMode = function() {
+  isDrawMode = !isDrawMode;
+  document.getElementById('drawRectBtn').classList.toggle('active-tool', isDrawMode);
+  if (isDrawMode) {
+    mapUpload.dragging.disable();
+    mapUpload.getContainer().style.cursor = 'crosshair';
+  } else {
+    mapUpload.dragging.enable();
+    mapUpload.getContainer().style.cursor = '';
+    if (drawRect) { mapUpload.removeLayer(drawRect); drawRect = null; }
+  }
+};
+
+window.clearSelection = function() {
+  selectedIndices.clear();
+  uploadedMarkerData.forEach(({ marker }) => marker.setIcon(makeMarkerIcon(false)));
+  updateSelectionUI();
+};
+
+window.exportSelectedPoints = function() {
+  if (selectedIndices.size === 0 || !storedCoordFileData) return;
+  const headers = Object.keys(storedCoordFileData[0]);
+  const rows = Array.from(selectedIndices)
+    .sort((a, b) => a - b)
+    .map(idx => storedCoordFileData[idx]);
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'urval');
+  const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'urval.xlsx';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
 async function displayCoordinatesOnMap(rows) {
   if (!mapUpload) {
     initUploadMap();
     await new Promise(resolve => setTimeout(resolve, 500));
   }
+
+  // Reset selection state for fresh load
+  selectedIndices.clear();
+  uploadedMarkerData = [];
+  if (isDrawMode) window.toggleDrawMode();
 
   // Clear old markers
   if (uploadedMarkersGroup) {
@@ -1270,7 +1379,8 @@ async function displayCoordinatesOnMap(rows) {
   let validPoints = 0;
 
   // Process all markers immediately with local data (fast!)
-  for (let row of rows) {
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+    const row = rows[rowIndex];
     const lat = parseFloat(row.lat);
     const lon = parseFloat(row.lon);
 
@@ -1293,7 +1403,7 @@ async function displayCoordinatesOnMap(rows) {
     const socken = polygonLookup(lon, lat, geojsonSockenstad, "sockenstadnamn") || "";
 
     // Create marker with initial popup (no address yet - will load on click)
-    const marker = L.marker([lat, lon]);
+    const marker = L.marker([lat, lon], { icon: makeMarkerIcon(false) });
 
     // Build initial popup content WITHOUT address (instant)
     let initialPopupContent = `
@@ -1369,10 +1479,26 @@ async function displayCoordinatesOnMap(rows) {
       }
     });
 
+    // Click toggles selection
+    marker.on('click', function() {
+      if (selectedIndices.has(rowIndex)) {
+        selectedIndices.delete(rowIndex);
+        marker.setIcon(makeMarkerIcon(false));
+      } else {
+        selectedIndices.add(rowIndex);
+        marker.setIcon(makeMarkerIcon(true));
+      }
+      updateSelectionUI();
+    });
+
+    uploadedMarkerData.push({ marker, rowIndex });
     marker.addTo(uploadedMarkersGroup);
   }
 
   uploadedMarkersGroup.addTo(mapUpload);
+
+  document.getElementById('selectionControls').style.display = 'block';
+  updateSelectionUI();
 
   if (validPoints > 0) {
     try {
