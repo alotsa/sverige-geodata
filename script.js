@@ -1130,10 +1130,10 @@ function initUploadMap() {
   });
 
   // GeoJSON-lager (återanvänder redan inläst data)
-  const kommunLayer = L.geoJSON(geojsonKommun, { style: { color: "#10b981", weight: 1, fillOpacity: 0 } });
-  const lanLayer = L.geoJSON(geojsonLan, { style: { color: "#3b82f6", weight: 2, fillOpacity: 0 } });
-  const landskapLayer = L.geoJSON(geojsonLandskap, { style: { color: "#8b5cf6", weight: 1, fillOpacity: 0 } });
-  const socknarLayer = L.geoJSON(geojsonSockenstad, { style: { color: "#000000", weight: 2, fillOpacity: 0 } });
+  const socknarLayer = L.geoJSON(geojsonSockenstad, { style: { color: "#808080", weight: 1, fillOpacity: 0 } });
+  const kommunLayer = L.geoJSON(geojsonKommun, { style: { color: "#0d9488", weight: 1.5, fillOpacity: 0 } });
+  const lanLayer = L.geoJSON(geojsonLan, { style: { color: "#2563eb", weight: 1.5, fillOpacity: 0 } });
+  const landskapLayer = L.geoJSON(geojsonLandskap, { style: { color: "#000000", weight: 1.5, fillOpacity: 0 } });
 
   let baseMaps = {};
   let overlayMaps = {
