@@ -11,7 +11,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -21,28 +21,16 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- HEADER -->
-    <header>
-      <div class="header-content">
-        <div class="logo-section">
-          <div class="brand-text">
-            <h1>geoLocus</h1>
-            <p>Län, kommun och landskap i ett klick!</p>
-          </div>
-        </div>
 
-        <!-- Mobile hamburger button -->
-        <button class="mobile-menu-toggle" aria-label="Meny" onclick="toggleMobileMenu()">☰</button>
-        
-        <nav class="tab-nav" id="mobileTabNav">
-          <button class="tab-button active" data-tab="main" onclick="openTab('main'); closeMobileMenu()">Karta</button>
-          <button class="tab-button" data-tab="visa-pa-karta" onclick="openTab('visa-pa-karta'); closeMobileMenu()">Visa koordinater på karta</button>
-          <button class="tab-button" data-tab="hämta-geodata" onclick="openTab('hämta-geodata'); closeMobileMenu()">Hämta geodata</button>
-          <button class="tab-button" data-tab="converter" onclick="openTab('converter'); closeMobileMenu()">Konvertera</button>
-          <button class="tab-button" data-tab="dokumentation" onclick="openTab('dokumentation'); closeMobileMenu()">Dokumentation</button>
-        </nav>
-      </div>
-    </header>
+    <!-- FLOATING NAV PILL -->
+    <button class="mobile-menu-toggle" aria-label="Meny" onclick="toggleMobileMenu()">☰</button>
+    <nav class="tab-nav" id="mobileTabNav">
+      <button class="tab-button active" data-tab="main" onclick="openTab('main'); closeMobileMenu()">Karta</button>
+      <button class="tab-button" data-tab="visa-pa-karta" onclick="openTab('visa-pa-karta'); closeMobileMenu()">Visa koordinater</button>
+      <button class="tab-button" data-tab="hämta-geodata" onclick="openTab('hämta-geodata'); closeMobileMenu()">Hämta geodata</button>
+      <button class="tab-button" data-tab="converter" onclick="openTab('converter'); closeMobileMenu()">Konvertera</button>
+      <button class="tab-button" data-tab="dokumentation" onclick="openTab('dokumentation'); closeMobileMenu()">Info</button>
+    </nav>
 
     <!-- MAIN CONTENT AREA -->
     <main class="content-area">
@@ -55,13 +43,12 @@
           <!-- Search controls overlaid on map - TOP LEFT -->
           <div class="map-controls">
             <div class="search-panel">
+              <div class="brand-in-panel">geoLocus</div>
               <div class="search-header">
                 <div class="search-row">
                   <input id="searchField" type="text" placeholder="Sök plats eller koordinat...">
                   <button id="searchButton">Sök</button>
-                </div>
-                <div class="button-row">
-                  <button id="clearPinsButton" class="secondary" style="width: 100%;">Rensa pins</button>
+                  <button id="clearPinsButton" class="secondary">Rensa pins</button>
                 </div>
               </div>
               
@@ -143,7 +130,7 @@
           <!-- Info buttons - text label hidden on mobile via CSS -->
           <div class="info-buttons">
             <button class="info-btn" onclick="openModal('tips')" title="Söktips">
-              💡<span class="info-btn-text"> Söktips</span>
+              💡
             </button>
           </div>
         </div>
@@ -191,18 +178,17 @@
           <!-- Upload controls overlaid on map -->
           <div class="upload-controls">
             <div class="upload-panel">
-              <h3>Ladda upp koordinater</h3>
+              <h3>Visa koordinater på karta</h3>
 
               <div class="upload-area-compact">
                 <label for="coordFile" class="custom-file-upload">
                   Välj fil
                 </label>
                 <input type="file" id="coordFile" accept=".xlsx,.xls,.csv" />
+                <button id="clearMapPinsBtn" class="secondary" style="white-space:nowrap;">Rensa pins</button>
               </div>
 
               <span id="coordFileName" class="file-info"></span>
-
-              <!-- Kolumnmappning - visas efter filval -->
               <div id="coordMappingPanel" style="display:none; margin-top: 0.75rem;">
                 <div style="display: grid; gap: 0.5rem; margin-bottom: 0.5rem;">
                   <div>
@@ -227,15 +213,11 @@
                 <button id="showOnMapBtn" style="width:100%;">Visa på karta</button>
               </div>
 
-              <button id="clearMapPinsBtn" class="secondary" style="width: 100%; margin-top: 0.75rem;">
-                Rensa kartan
-              </button>
-
               <!-- Selection and export controls - shown after markers are loaded -->
               <div id="selectionControls" style="display:none; margin-top:0.75rem; border-top:1px solid #e2e8f0; padding-top:0.75rem;">
                 <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
                   <button id="drawRectBtn" class="secondary" style="flex:1;" onclick="toggleDrawMode()">Markera område</button>
-                  <button id="clearSelectionBtn" class="secondary" style="flex:1;" disabled onclick="clearSelection()">Rensa urval</button>
+                  <button id="clearSelectionBtn" class="secondary" style="flex:1;" disabled onclick="clearSelection()">Rensa markering</button>
                 </div>
                 <button id="exportSelectedBtn" style="width:100%;" disabled onclick="exportSelectedPoints()">Exportera urval</button>
               </div>
@@ -281,15 +263,9 @@
             <div id="columnMappingPanel" style="display:none; margin-top: 1rem; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 10px; padding: 1.25rem;">
               <h3 style="font-size: 1rem; font-weight: 600; color: #0f172a; margin-bottom: 0.5rem;">Välj kolumner</h3>
               <p style="font-size: 0.875rem; color: #475569; margin-bottom: 1rem;">
-                Ange vilka kolumner som innehåller id, latitud och longitud.
+                Ange vilka kolumner som innehåller latitud och longitud.
               </p>
               <div style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
-                <div>
-                  <label style="display:block; font-size:0.8125rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">
-                    ID-kolumn <span style="font-weight:400; color:#64748b;">(valfritt)</span>
-                  </label>
-                  <select id="mapId" style="width:100%;"></select>
-                </div>
                 <div>
                   <label style="display:block; font-size:0.8125rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">
                     Latitud-kolumn <span style="color:#ef4444;">*</span>
@@ -346,7 +322,7 @@
             <div class="section-header">
               <h2>Om geoLocus</h2>
             </div>
-            <p>geoLocus är ett webbaserat verktyg för att georeferera koordinater och visa geografisk information om platser i Sverige och världen. Verktyget är byggt med HTML, CSS och JavaScript och använder biblioteken Leaflet.js (kartor), Turf.js (polygonanalys) och proj4js (koordinattransformation). Projektet är öppet – källkoden finns på <a href="https://github.com/alotsa/sverige-geodata" target="_blank">GitHub</a>. Senaste uppdateringen gjordes 2026-03-29.</p>
+            <p>geoLocus är ett webbaserat verktyg för att georeferera koordinater och visa geografisk information om platser i Sverige och världen. Verktyget är byggt med HTML, CSS och JavaScript och använder biblioteken Leaflet.js (kartor), Turf.js (polygonanalys) och proj4js (koordinattransformation). Projektet är öppet – källkoden finns på <a href="https://github.com/alotsa/sverige-geodata" target="_blank">GitHub</a>. Senaste uppdateringen gjordes 2026-04-26.</p>
           </div>
 
           <div class="card">
