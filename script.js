@@ -715,7 +715,7 @@ function convertCoordinates() {
 let storedFileData = null;
 let extraColumnsForExport = [];
 let originalColumnOrder = [];
-let colMappings = { id: '', lat: '', lon: '' };
+let colMappings = { lat: '', lon: '' };
 
 function showFileError(message) {
   const el = document.getElementById('fileValidationMessage');
@@ -780,17 +780,17 @@ function populateColumnSelects(headers, idElId, latElId, lonElId) {
   const latGuesses = ['lat', 'latitude', 'latitud', 'y', 'wgs84_lat', 'lat_wgs84', 'n', 'north'];
   const lonGuesses = ['lon', 'lng', 'long', 'longitude', 'longitud', 'x', 'wgs84_lon', 'lon_wgs84', 'e', 'east'];
 
-  const mapId  = document.getElementById(idElId);
+  const mapId  = idElId ? document.getElementById(idElId) : null;
   const mapLat = document.getElementById(latElId);
   const mapLon = document.getElementById(lonElId);
 
-  mapId.innerHTML  = '<option value="">— Inget id-fält —</option>';
+  if (mapId) mapId.innerHTML = '<option value="">— Inget id-fält —</option>';
   mapLat.innerHTML = '<option value="">Välj kolumn …</option>';
   mapLon.innerHTML = '<option value="">Välj kolumn …</option>';
 
   headers.forEach(h => {
     const esc = h.replace(/"/g, '&quot;');
-    mapId.innerHTML  += `<option value="${esc}">${h}</option>`;
+    if (mapId) mapId.innerHTML += `<option value="${esc}">${h}</option>`;
     mapLat.innerHTML += `<option value="${esc}">${h}</option>`;
     mapLon.innerHTML += `<option value="${esc}">${h}</option>`;
   });
@@ -799,17 +799,17 @@ function populateColumnSelects(headers, idElId, latElId, lonElId) {
   const latMatch = headers.find(h => latGuesses.includes(lower(h)));
   const lonMatch = headers.find(h => lonGuesses.includes(lower(h)));
 
-  if (idMatch)  mapId.value  = idMatch;
+  if (idMatch && mapId) mapId.value = idMatch;
   if (latMatch) mapLat.value = latMatch;
   if (lonMatch) mapLon.value = lonMatch;
 }
 
 function showColumnMapper(headers, jsonData) {
-  populateColumnSelects(headers, 'mapId', 'mapLat', 'mapLon');
+  populateColumnSelects(headers, null, 'mapLat', 'mapLon');
 
   updateMappingPreview(jsonData[0]);
 
-  ['mapId', 'mapLat', 'mapLon'].forEach(id => {
+  ['mapLat', 'mapLon'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => updateMappingPreview(jsonData[0]));
   });
 
@@ -820,24 +820,21 @@ function updateMappingPreview(firstRow) {
   const preview = document.getElementById('mappingPreview');
   const latCol  = document.getElementById('mapLat').value;
   const lonCol  = document.getElementById('mapLon').value;
-  const idCol   = document.getElementById('mapId').value;
 
   if (!latCol || !lonCol) {
     preview.textContent = '';
     return;
   }
 
-  const idVal  = idCol ? firstRow[idCol] : '(radnummer)';
   const latVal = firstRow[latCol] ?? '–';
   const lonVal = firstRow[lonCol] ?? '–';
 
-  preview.innerHTML = `<strong>Förhandsgranskning (rad 1):</strong> id = ${idVal}, lat = ${latVal}, lon = ${lonVal}`;
+  preview.innerHTML = `<strong>Förhandsgranskning (rad 1):</strong> lat = ${latVal}, lon = ${lonVal}`;
 }
 
 function startProcessingWithMapping() {
   const latCol = document.getElementById('mapLat').value;
   const lonCol = document.getElementById('mapLon').value;
-  const idCol  = document.getElementById('mapId').value;
 
   if (!latCol || !lonCol) {
     showFileError("Du måste välja kolumner för latitud och longitud.");
@@ -848,16 +845,12 @@ function startProcessingWithMapping() {
     return;
   }
 
-  // Alla kolumner utom de tre mappade följer med i exporten
-  const mappedCols = [latCol, lonCol, ...(idCol ? [idCol] : [])];
-  extraColumnsForExport = Object.keys(storedFileData[0]).filter(c => !mappedCols.includes(c));
+  extraColumnsForExport = Object.keys(storedFileData[0]).filter(c => c !== latCol && c !== lonCol);
   originalColumnOrder = Object.keys(storedFileData[0]);
-  colMappings = { id: idCol, lat: latCol, lon: lonCol };
+  colMappings = { lat: latCol, lon: lonCol };
 
-  // Bygg om raderna så att processRows kan använda row.lat / row.lon / row.id
-  const remappedRows = storedFileData.map((row, i) => {
+  const remappedRows = storedFileData.map(row => {
     const newRow = {};
-    newRow.id  = idCol ? row[idCol] : '';
     newRow.lat = row[latCol];
     newRow.lon = row[lonCol];
     extraColumnsForExport.forEach(col => { newRow[col] = row[col]; });
@@ -1041,12 +1034,11 @@ function generateAndDownloadExcel(rows) {
 
   const columnHeaders = [...originalColumnOrder, ...geoColumns];
 
-  const orderedRows = rows.map((row, index) => {
+  const orderedRows = rows.map(row => {
     const orderedRow = {};
     originalColumnOrder.forEach(col => {
       if (col === colMappings.lat) orderedRow[col] = row.lat ?? "";
       else if (col === colMappings.lon) orderedRow[col] = row.lon ?? "";
-      else if (colMappings.id && col === colMappings.id) orderedRow[col] = (row.id !== undefined && row.id !== "") ? row.id : index + 1;
       else orderedRow[col] = row[col] ?? "";
     });
     geoColumns.forEach(col => { orderedRow[col] = row[col] || ""; });
