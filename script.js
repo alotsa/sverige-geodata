@@ -1234,9 +1234,10 @@ document.getElementById('clearMapPinsBtn').addEventListener('click', function() 
 });
 
 document.getElementById('showOnMapBtn').addEventListener('click', function() {
-  const latCol = document.getElementById('coordMapLat').value;
-  const lonCol = document.getElementById('coordMapLon').value;
-  const idCol  = document.getElementById('coordMapId').value;
+  const latCol      = document.getElementById('coordMapLat').value;
+  const lonCol      = document.getElementById('coordMapLon').value;
+  const idCol       = document.getElementById('coordMapId').value;
+  const accuracyCol = document.getElementById('coordMapAccuracy').value;
 
   if (!latCol || !lonCol) {
     alert("Du måste välja kolumner för latitud och longitud.");
@@ -1244,9 +1245,10 @@ document.getElementById('showOnMapBtn').addEventListener('click', function() {
   }
 
   const remappedRows = storedCoordFileData.map((row, i) => ({
-    id:  idCol ? row[idCol] : i + 1,
-    lat: row[latCol],
-    lon: row[lonCol]
+    id:       idCol       ? row[idCol]       : i + 1,
+    lat:      row[latCol],
+    lon:      row[lonCol],
+    accuracy: accuracyCol ? row[accuracyCol] : null
   }));
 
   displayCoordinatesOnMap(remappedRows);
@@ -1287,6 +1289,21 @@ function readCoordFileForMapping(file) {
 
 function showCoordColumnMapper(headers) {
   populateColumnSelects(headers, 'coordMapId', 'coordMapLat', 'coordMapLon');
+
+  // Populate accuracy dropdown separately
+  const accuracySelect = document.getElementById('coordMapAccuracy');
+  const accuracyGuesses = ['accuracy', 'noggrannhet', 'precision', 'error', 'uncertainty', 'radius', 'acc'];
+  const lower = h => h.toLowerCase().trim();
+
+  accuracySelect.innerHTML = '<option value="">— Ingen noggrannhetskolumn —</option>';
+  headers.forEach(h => {
+    const esc = h.replace(/"/g, '&quot;');
+    accuracySelect.innerHTML += `<option value="${esc}">${h}</option>`;
+  });
+
+  const accuracyMatch = headers.find(h => accuracyGuesses.includes(lower(h)));
+  if (accuracyMatch) accuracySelect.value = accuracyMatch;
+
   document.getElementById('coordMappingPanel').style.display = 'block';
 }
 
@@ -1400,6 +1417,23 @@ async function displayCoordinatesOnMap(rows) {
     // Create marker with initial popup (no address yet - will load on click)
     const marker = L.marker([lat, lon], { icon: makeMarkerIcon(false) });
 
+    // Draw accuracy circle if present
+    const accuracyM = parseFloat(row.accuracy);
+    if (!isNaN(accuracyM) && accuracyM > 0) {
+      L.circle([lat, lon], {
+        radius: accuracyM,
+        color: '#3b82f6',
+        fillColor: '#3b82f6',
+        fillOpacity: 0.1,
+        weight: 1.5,
+        interactive: false
+      }).addTo(uploadedMarkersGroup);
+    }
+
+    const accuracyLine = (!isNaN(accuracyM) && accuracyM > 0)
+      ? `<strong>Noggrannhet:</strong> ${accuracyM} m<br>`
+      : '';
+
     // Build initial popup content WITHOUT address (instant)
     let initialPopupContent = `
   <strong>id:</strong> ${row.id}<br><br>
@@ -1407,6 +1441,7 @@ async function displayCoordinatesOnMap(rows) {
   <strong>WGS84:</strong> ${lat.toFixed(5)}, ${lon.toFixed(5)}<br>
   <strong>RT90 2.5 gon V:</strong> ${Math.round(rt90Coords[1])}, ${Math.round(rt90Coords[0])}<br>
   <strong>SWEREF99 TM:</strong> ${Math.round(swerefCoords[1])}, ${Math.round(swerefCoords[0])}<br>
+  ${accuracyLine}
   <br>
   <strong>Adress:</strong> <em style="color: #64748b;">Klicka på markören för att hämta adress...</em><br>
   <hr>
@@ -1451,6 +1486,7 @@ async function displayCoordinatesOnMap(rows) {
   <strong>WGS84:</strong> ${lat.toFixed(5)}, ${lon.toFixed(5)}<br>
   <strong>RT90 2.5 gon V:</strong> ${Math.round(rt90Coords[1])}, ${Math.round(rt90Coords[0])}<br>
   <strong>SWEREF99 TM:</strong> ${Math.round(swerefCoords[1])}, ${Math.round(swerefCoords[0])}<br>
+  ${accuracyLine}
   <br>
   <strong>Adress:</strong> ${formattedAddress}<br><br>
   <strong>Källa:</strong> Nominatim/OpenStreetMap
