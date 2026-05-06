@@ -167,6 +167,55 @@
               </div>
             </div>
           </div>
+
+          <div class="card">
+            <div class="section-header">
+              <h2>Konvertera koordinater i batch</h2>
+            </div>
+
+            <p style="margin-bottom: 1.5rem;">Ladda upp en fil med koordinater och konvertera alla rader till de övriga koordinatsystemen.</p>
+
+            <div class="upload-area">
+              <label for="batchConvFile" class="custom-file-upload">
+                Välj fil
+              </label>
+              <input type="file" id="batchConvFile" accept=".xlsx,.xls,.csv" />
+              <span id="batchConvFileName" class="file-info"></span>
+            </div>
+
+            <div id="batchConvMappingPanel" style="display:none; margin-top: 1rem; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 10px; padding: 1.25rem;">
+              <h3 style="font-size: 1rem; font-weight: 600; color: #0f172a; margin-bottom: 0.5rem;">Välj kolumner</h3>
+              <div style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
+                <div>
+                  <label style="display:block; font-size:0.8125rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">
+                    Indataformat <span style="color:#ef4444;">*</span>
+                  </label>
+                  <select id="batchConvSystem" style="width:100%;" onchange="updateBatchConvFields()">
+                    <option value="wgs84">WGS84 (Lat, Lon)</option>
+                    <option value="rt90">RT90 2.5 gon V (Nord, Ost)</option>
+                    <option value="sweref">SWEREF99 TM (Nord, Ost)</option>
+                  </select>
+                </div>
+                <div>
+                  <label id="batchConvCol1Label" style="display:block; font-size:0.8125rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">
+                    Latitud-kolumn <span style="color:#ef4444;">*</span>
+                  </label>
+                  <select id="batchConvCol1" style="width:100%;"></select>
+                </div>
+                <div>
+                  <label id="batchConvCol2Label" style="display:block; font-size:0.8125rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">
+                    Longitud-kolumn <span style="color:#ef4444;">*</span>
+                  </label>
+                  <select id="batchConvCol2" style="width:100%;"></select>
+                </div>
+              </div>
+              <div id="batchConvPreview" style="font-size:0.8125rem; color:#64748b; margin-bottom:1rem; min-height:1.25rem;"></div>
+              <button id="batchConvBtn" style="width:100%;" onclick="runBatchConversion()">Konvertera och ladda ned</button>
+            </div>
+
+            <div id="batchConvError" style="display:none; margin-top:0.75rem; padding:0.875rem 1rem; border-radius:8px; border:2px solid #fca5a5; background:#fef2f2; color:#b91c1c; font-size:0.875rem; font-weight:500;"></div>
+          </div>
+
         </div>
       </div>
 

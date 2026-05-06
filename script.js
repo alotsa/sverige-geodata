@@ -1642,3 +1642,271 @@ if (!document.getElementById('copy-feedback-styles')) {
   `;
   document.head.appendChild(style);
 }
+/****************************************************
+ * BATCH COORDINATE CONVERSION
+ ****************************************************/
+
+let storedBatchConvData = null;
+let batchConvHeaders = [];
+
+document.getElementById('batchConvFile').addEventListener('change', function(e) {
+  const fileNameDisplay = document.getElementById('batchConvFileName');
+  const mappingPanel    = document.getElementById('batchConvMappingPanel');
+
+  if (e.target.files.length > 0) {
+    const file = e.target.files[0];
+    fileNameDisplay.textContent = `Vald fil: ${file.name}`;
+    mappingPanel.style.display  = 'none';
+    storedBatchConvData = null;
+    readBatchConvFile(file);
+  } else {
+    fileNameDisplay.textContent = '';
+    mappingPanel.style.display  = 'none';
+  }
+});
+
+function readBatchConvFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let jsonData;
+    try {
+      const isCsv = file.name.toLowerCase().endsWith('.csv');
+      if (isCsv) {
+        const text = new TextDecoder('utf-8').decode(new Uint8Array(e.target.result));
+        const workbook = XLSX.read(text, { type: 'string' });
+        jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: '' });
+      } else {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: '' });
+      }
+    } catch(err) {
+      showBatchConvError(`Kunde inte läsa filen: ${err.message}`);
+      return;
+    }
+
+    if (jsonData.length === 0) {
+      showBatchConvError('Filen är tom eller saknar data.');
+      return;
+    }
+
+    storedBatchConvData = jsonData;
+    batchConvHeaders    = Object.keys(jsonData[0]);
+    showBatchConvMapper(batchConvHeaders, jsonData[0]);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showBatchConvMapper(headers, firstRow) {
+  populateBatchConvSelects(headers);
+  updateBatchConvPreview(firstRow);
+
+  ['batchConvCol1', 'batchConvCol2'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => updateBatchConvPreview(firstRow));
+  });
+
+  document.getElementById('batchConvMappingPanel').style.display = 'block';
+}
+
+function populateBatchConvSelects(headers) {
+  const system = document.getElementById('batchConvSystem').value;
+  const col1   = document.getElementById('batchConvCol1');
+  const col2   = document.getElementById('batchConvCol2');
+  const lower  = h => h.toLowerCase().trim();
+
+  let col1Guesses, col2Guesses;
+  if (system === 'wgs84') {
+    col1Guesses = ['lat', 'latitude', 'latitud', 'wgs84_lat', 'lat_wgs84'];
+    col2Guesses = ['lon', 'lng', 'long', 'longitude', 'longitud', 'wgs84_lon', 'lon_wgs84'];
+  } else {
+    col1Guesses = ['n', 'nord', 'north', 'northing', 'y'];
+    col2Guesses = ['e', 'ost', 'east', 'easting', 'x'];
+  }
+
+  col1.innerHTML = '<option value="">Välj kolumn …</option>';
+  col2.innerHTML = '<option value="">Välj kolumn …</option>';
+
+  headers.forEach(h => {
+    const esc = h.replace(/"/g, '&quot;');
+    col1.innerHTML += `<option value="${esc}">${h}</option>`;
+    col2.innerHTML += `<option value="${esc}">${h}</option>`;
+  });
+
+  const col1Match = headers.find(h => col1Guesses.includes(lower(h)));
+  const col2Match = headers.find(h => col2Guesses.includes(lower(h)));
+  if (col1Match) col1.value = col1Match;
+  if (col2Match) col2.value = col2Match;
+}
+
+window.updateBatchConvFields = function() {
+  const system = document.getElementById('batchConvSystem').value;
+  const label1 = document.getElementById('batchConvCol1Label');
+  const label2 = document.getElementById('batchConvCol2Label');
+
+  if (system === 'wgs84') {
+    label1.innerHTML = 'Latitud-kolumn <span style="color:#ef4444;">*</span>';
+    label2.innerHTML = 'Longitud-kolumn <span style="color:#ef4444;">*</span>';
+  } else {
+    label1.innerHTML = 'Nord-kolumn <span style="color:#ef4444;">*</span>';
+    label2.innerHTML = 'Ost-kolumn <span style="color:#ef4444;">*</span>';
+  }
+
+  if (storedBatchConvData) {
+    populateBatchConvSelects(batchConvHeaders);
+    updateBatchConvPreview(storedBatchConvData[0]);
+  }
+};
+
+function updateBatchConvPreview(firstRow) {
+  const preview = document.getElementById('batchConvPreview');
+  const col1    = document.getElementById('batchConvCol1').value;
+  const col2    = document.getElementById('batchConvCol2').value;
+  const system  = document.getElementById('batchConvSystem').value;
+
+  if (!col1 || !col2) { preview.textContent = ''; return; }
+
+  const val1   = firstRow[col1] ?? '–';
+  const val2   = firstRow[col2] ?? '–';
+  const label1 = system === 'wgs84' ? 'lat' : 'nord';
+  const label2 = system === 'wgs84' ? 'lon'  : 'ost';
+
+  preview.innerHTML = `<strong>Förhandsgranskning (rad 1):</strong> ${label1} = ${val1}, ${label2} = ${val2}`;
+}
+
+function showBatchConvError(message) {
+  const el = document.getElementById('batchConvError');
+  el.textContent    = message;
+  el.style.display  = 'block';
+}
+
+function clearBatchConvError() {
+  const el = document.getElementById('batchConvError');
+  el.style.display  = 'none';
+  el.textContent    = '';
+}
+
+function runBatchConversion() {
+  clearBatchConvError();
+
+  const system = document.getElementById('batchConvSystem').value;
+  const col1   = document.getElementById('batchConvCol1').value;
+  const col2   = document.getElementById('batchConvCol2').value;
+
+  if (!col1 || !col2) {
+    showBatchConvError('Du måste välja kolumner för båda koordinatfälten.');
+    return;
+  }
+  if (!storedBatchConvData || storedBatchConvData.length === 0) {
+    showBatchConvError('Ingen fil inläst.');
+    return;
+  }
+
+  const originalHeaders = Object.keys(storedBatchConvData[0]);
+  const addWgs84  = system !== 'wgs84';
+  const addRt90   = system !== 'rt90';
+  const addSweref = system !== 'sweref';
+
+  const outputRows = storedBatchConvData.map(row => {
+    const v1 = parseFloat(String(row[col1] || '').replace(',', '.'));
+    const v2 = parseFloat(String(row[col2] || '').replace(',', '.'));
+    const newRow = { ...row };
+    let felmeddelande = '';
+
+    if (isNaN(v1) || isNaN(v2)) {
+      felmeddelande = 'Ogiltiga koordinater';
+      if (addWgs84)  { newRow.conv_wgs84_lat = ''; newRow.conv_wgs84_lon = ''; }
+      if (addRt90)   { newRow.conv_rt90_nord  = ''; newRow.conv_rt90_ost  = ''; }
+      if (addSweref) { newRow.conv_sweref_nord = ''; newRow.conv_sweref_ost = ''; }
+    } else {
+      // Range check - warn if values don't look right for the chosen system
+      let rangeWarning = '';
+      if (system === 'wgs84') {
+        if (v1 < -90 || v1 > 90 || v2 < -180 || v2 > 180)
+          rangeWarning = 'Koordinaterna ligger utanför giltigt WGS84-intervall';
+      } else if (system === 'rt90') {
+        if (v1 < 6000000 || v1 > 7700000 || v2 < 1200000 || v2 > 1900000)
+          rangeWarning = 'Koordinaterna verkar inte vara i RT90-format';
+      } else {
+        if (v1 < 6100000 || v1 > 7750000 || v2 < 250000 || v2 > 950000)
+          rangeWarning = 'Koordinaterna verkar inte vara i SWEREF99 TM-format';
+      }
+      if (rangeWarning) felmeddelande = rangeWarning;
+
+      try {
+        let wgs84_xy, rt90_xy, sweref_xy;
+
+        if (system === 'wgs84') {
+          // v1 = lat, v2 = lon  →  proj4 wants [lon, lat]
+          wgs84_xy  = [v2, v1];
+          rt90_xy   = proj4('EPSG:4326', 'RT90',     wgs84_xy);
+          sweref_xy = proj4('EPSG:4326', 'EPSG:3006', wgs84_xy);
+        } else if (system === 'rt90') {
+          // v1 = nord, v2 = ost  →  proj4 wants [ost, nord]
+          rt90_xy   = [v2, v1];
+          wgs84_xy  = proj4('RT90',     'EPSG:4326', rt90_xy);
+          sweref_xy = proj4('EPSG:4326', 'EPSG:3006', wgs84_xy);
+        } else {
+          // sweref  →  v1 = nord, v2 = ost
+          sweref_xy = [v2, v1];
+          wgs84_xy  = proj4('EPSG:3006', 'EPSG:4326', sweref_xy);
+          rt90_xy   = proj4('EPSG:4326', 'RT90',      wgs84_xy);
+        }
+
+        if (addWgs84) {
+          newRow.conv_wgs84_lat = parseFloat(wgs84_xy[1].toFixed(5));
+          newRow.conv_wgs84_lon = parseFloat(wgs84_xy[0].toFixed(5));
+        }
+        if (addRt90) {
+          newRow.conv_rt90_nord = Math.round(rt90_xy[1]);
+          newRow.conv_rt90_ost  = Math.round(rt90_xy[0]);
+        }
+        if (addSweref) {
+          newRow.conv_sweref_nord = Math.round(sweref_xy[1]);
+          newRow.conv_sweref_ost  = Math.round(sweref_xy[0]);
+        }
+      } catch(err) {
+        felmeddelande = `Konverteringsfel: ${err.message}`;
+        if (addWgs84)  { newRow.conv_wgs84_lat = ''; newRow.conv_wgs84_lon = ''; }
+        if (addRt90)   { newRow.conv_rt90_nord  = ''; newRow.conv_rt90_ost  = ''; }
+        if (addSweref) { newRow.conv_sweref_nord = ''; newRow.conv_sweref_ost = ''; }
+      }
+    }
+
+    newRow.conv_felmeddelande = felmeddelande;
+    return newRow;
+  });
+
+  // Column order: original first, then new columns
+  const newCols = [];
+  if (addWgs84)  newCols.push('conv_wgs84_lat',   'conv_wgs84_lon');
+  if (addRt90)   newCols.push('conv_rt90_nord',    'conv_rt90_ost');
+  if (addSweref) newCols.push('conv_sweref_nord',  'conv_sweref_ost');
+  newCols.push('conv_felmeddelande');
+
+  const columnHeaders = [...originalHeaders, ...newCols];
+
+  const workbook  = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(outputRows, { header: columnHeaders });
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'konverterade');
+
+  const systemLabel = system === 'wgs84' ? 'WGS84' : system === 'rt90' ? 'RT90 2.5 gon V' : 'SWEREF99 TM';
+  const infoData = [
+    ['Info'],
+    [''],
+    [`Koordinater konverterade från ${systemLabel} med geoLocus.`],
+    ['Konverteringen utförs med proj4js och Lantmäteriets rekommenderade metod för RT90.'],
+    ['Prefix conv_ används för att undvika namnkonflikter med befintliga kolumner i ursprungsfilen.']
+  ];
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(infoData), 'info');
+
+  const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const blob  = new Blob([wbout], { type: 'application/octet-stream' });
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement('a');
+  a.href      = url;
+  a.download  = 'konverterade-koordinater.xlsx';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
