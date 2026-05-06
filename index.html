@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>geoLocus - Län, kommun och landskap i ett klick!</title>
+  <script data-goatcounter="https://alotsa.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
@@ -173,7 +174,7 @@
               <h2>Konvertera koordinater i batch</h2>
             </div>
 
-            <p style="margin-bottom: 1.5rem;">Ladda upp en fil med koordinater och konvertera alla rader till de övriga koordinatsystemen.</p>
+            <p style="margin-bottom: 1.5rem;">Ladda upp en fil (<code>.xlsx</code> eller <code>.xls</code>) med koordinater och konvertera alla rader till de övriga koordinatsystemen.</p>
 
             <div class="upload-area">
               <label for="batchConvFile" class="custom-file-upload">
@@ -231,7 +232,7 @@
 
               <div class="upload-area-compact">
                 <label for="coordFile" class="custom-file-upload">
-                  Välj fil
+                  Välj Excel-fil
                 </label>
                 <input type="file" id="coordFile" accept=".xlsx,.xls,.csv" />
                 <button id="clearMapPinsBtn" class="secondary" style="white-space:nowrap;">Rensa pins</button>
@@ -257,6 +258,12 @@
                       Longitud-kolumn <span style="color:#ef4444;">*</span>
                     </label>
                     <select id="coordMapLon" style="width:100%;"></select>
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:0.75rem; font-weight:600; color:#475569; margin-bottom:0.2rem;">
+                      Noggrannhetskolumn <span style="font-weight:400; color:#64748b;">(valfritt, meter)</span>
+                    </label>
+                    <select id="coordMapAccuracy" style="width:100%;"></select>
                   </div>
                 </div>
                 <button id="showOnMapBtn" style="width:100%;">Visa på karta</button>
@@ -371,7 +378,10 @@
             <div class="section-header">
               <h2>Om geoLocus</h2>
             </div>
-            <p>geoLocus är ett webbaserat verktyg för att georeferera koordinater och visa geografisk information om platser i Sverige och världen. Verktyget är byggt med HTML, CSS och JavaScript och använder biblioteken Leaflet.js (kartor), Turf.js (polygonanalys) och proj4js (koordinattransformation). Projektet är öppet – källkoden finns på <a href="https://github.com/alotsa/sverige-geodata" target="_blank">GitHub</a>. Senaste uppdateringen gjordes 2026-04-26.</p>
+            <p>geoLocus är ett webbaserat verktyg för att georeferera koordinater och visa geografisk information om platser i Sverige och världen. Verktyget är byggt med HTML, CSS och JavaScript och använder biblioteken Leaflet.js (kartor), Turf.js (polygonanalys) och proj4js (koordinattransformation).</p>
+            <p>Projektet är öppet, källkoden finns på <a href="https://github.com/alotsa/sverige-geodata" target="_blank">GitHub</a>.</p>
+            <p>Anonymiserad besöksstatistik samlas in via <a href="https://www.goatcounter.com" target="_blank">GoatCounter</a> – inga cookies används och inga personuppgifter lagras.</p>
+            <p>Senaste uppdateringen gjordes 2026-04-26.</p>
           </div>
 
           <div class="card">
@@ -469,9 +479,9 @@
       <div class="modal-body">
         <ul>
           <li>Du kan söka på ortnamn, sjöar, bäckar, vägnummer, trafikplatser, byggnader, restauranger m.m.</li>
+          <li>Filtrera sökningen på län eller landskap genom att trycka på Sökfilter under sökrutan</li>
           <li>Koordinatsystem som stöds är WGS84, RT90 2.5 gon V, SWEREF99 TM, DMS och DDM</li>
           <li>Sök på socken genom att skriva t.ex. 'Hilleshög socken'</li>
-          <li>Socken-lagret behöver vara tänt för att det ska synas i pop up-rutan vilken socken en plats tillhör</li>
           <li>För att hitta länsvägar (LV), sök på <a href="https://sv.wikipedia.org/wiki/L%C3%A4nsbokstav" target="_blank">länsbokstav</a> + vägnummer, t.ex. AB 1035</li>
           <li>Riksvägar (RV) inleds inte med någon bokstav</li>
           <li>Listan med förslag som visas efter en sökning är begränsad till 50 träffar</li>
