@@ -58,7 +58,7 @@ function loadGeoJSON() {
     addGeoJsonLayers();
   })
   .catch(err => {
-    console.error("❌ Fel vid inläsning av GeoJSON:", err);
+    console.error("Fel vid inläsning av GeoJSON:", err);
     alert("Kunde inte ladda geodata-filer.\n\nKontrollera att:\n1. Du har en 'data/' mapp i samma katalog som HTML-filen\n2. Alla .geojson filer finns i 'data/' mappen\n\nFel: " + err.message);
   });
 }
@@ -72,7 +72,7 @@ function initializeMap() {
     zoomSnap: 1,
     zoomDelta: 1,
     minZoom: 4,
-    maxZoom: 19
+    maxZoom: 21
   });
 
   var osmBase = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -80,27 +80,28 @@ function initializeMap() {
     tileSize: 256,
     detectRetina: false,
     noWrap: true,
-    maxZoom: 19
+    maxZoom: 21, // allow rendering up to 21
+    maxNativeZoom: 19 // OSM only render new tiles up to 19, they will stretch beyond that
   }).addTo(map);
 
   var topowebb = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/topowebb/?', {
     layers: ['topowebbkartan'],
     format: 'image/png',
     transparent: false,
-    maxZoom: 19
+    maxZoom: 21
   });
 
   var ortofoto = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/ortofoto/?', {
     layers: ['Ortofoto_0.5', 'Ortofoto_0.4', 'Ortofoto_0.25', 'Ortofoto_0.16'],
     format: 'image/png',
     transparent: false,
-    maxZoom: 17
+    maxZoom: 21
   });
 
   var fastigheter_rod = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/fastighetsindelning/?', {
     layers: ['granser', 'text'],
     styles: ['ljusbakgrund', 'ljusbakgrund'],
-    maxZoom: 17,
+    maxZoom: 21,
     transparent: true,
     format: 'image/png'
   });
@@ -1095,7 +1096,7 @@ function initUploadMap() {
     zoomSnap: 1,
     zoomDelta: 1,
     minZoom: 4,
-    maxZoom: 19
+    maxZoom: 21
   });
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1103,7 +1104,8 @@ function initUploadMap() {
     tileSize: 256,
     detectRetina: false,
     noWrap: true,
-    maxZoom: 19
+    maxZoom: 21,        // allow rendering up to 21
+    maxNativeZoom: 19   // OSM only render new tiles up to 19, they will stretch beyond that
   }).addTo(mapUpload);
 
   // Add layer control
@@ -1111,14 +1113,14 @@ function initUploadMap() {
     layers: ['topowebbkartan'],
     format: 'image/png',
     transparent: false,
-    maxZoom: 19
+    maxZoom: 21
   });
 
   let ortofoto = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/ortofoto/?', {
     layers: ['Ortofoto_0.5', 'Ortofoto_0.4', 'Ortofoto_0.25', 'Ortofoto_0.16'],
     format: 'image/png',
     transparent: false,
-    maxZoom: 17
+    maxZoom: 21
   });
 
   // GeoJSON-lager (återanvänder redan inläst data)
