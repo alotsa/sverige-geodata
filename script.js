@@ -89,14 +89,16 @@ function initializeMap() {
     layers: ['topowebbkartan'],
     format: 'image/png',
     transparent: false,
-    maxZoom: 21
+    maxZoom: 21,
+    attribution: '© Lantmäteriet'
   });
 
   var ortofoto = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/ortofoto/?', {
     layers: ['Ortofoto_0.5', 'Ortofoto_0.4', 'Ortofoto_0.25', 'Ortofoto_0.16'],
     format: 'image/png',
     transparent: false,
-    maxZoom: 21
+    maxZoom: 21,
+    attribution: '© Lantmäteriet'
   });
 
   var fastigheter_rod = L.tileLayer.wms('https://minkarta.lantmateriet.se/map/fastighetsindelning/?', {
@@ -104,7 +106,8 @@ function initializeMap() {
     styles: ['ljusbakgrund', 'ljusbakgrund'],
     maxZoom: 21,
     transparent: true,
-    format: 'image/png'
+    format: 'image/png',
+    attribution: '© Lantmäteriet'
   });
 
   let baseMaps = {
