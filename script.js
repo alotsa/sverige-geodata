@@ -18,6 +18,7 @@ window.addEventListener('load', function() {
 
 let geojsonLan, geojsonKommun, geojsonLandskap, geojsonSockenstad;
 let currentMarkersGroup;
+let minimizedMarker = null;
 let map;
 let overlayMaps = {};
 let layerControl;
@@ -254,6 +255,10 @@ function ddToDDM(dd, isLat) {
 }
 
 async function showAllInfo(lat, lng) {
+  if (minimizedMarker) {
+    map.removeLayer(minimizedMarker);
+    minimizedMarker = null;
+  }
   try {
     let rt90Coords, swerefCoords;
     try {
@@ -323,6 +328,10 @@ async function showAllInfo(lat, lng) {
     coordText += `<strong>DDM:</strong> ${ddToDDM(lat, true)}, ${ddToDDM(lng, false)}<br>`;
 
     const popupHtml = `
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:4px;">
+        <span onclick="minimizePopup(${lat},${lng})" title="Minimera till nål" style="cursor:pointer;color:#64748b;font-size:1.1rem;line-height:1;">&#8722;</span>
+        <span onclick="map.closePopup()" title="Stäng" style="cursor:pointer;color:#64748b;font-size:1.1rem;line-height:1;">&#215;</span>
+      </div>
       <strong>Koordinater:</strong><br>
       ${coordText}
       <br>
@@ -332,7 +341,7 @@ async function showAllInfo(lat, lng) {
       ${polygonText}
     `;
 
-    L.popup()
+    L.popup({ closeButton: false })
       .setLatLng([lat, lng])
       .setContent(popupHtml)
       .openOn(map);
@@ -417,6 +426,20 @@ function handleAutocomplete() {
       resultsContainer.appendChild(ul);
     })
     .catch(console.error);
+}
+
+function minimizePopup(lat, lng) {
+  map.closePopup();
+  if (minimizedMarker) {
+    map.removeLayer(minimizedMarker);
+  }
+  minimizedMarker = L.marker([lat, lng]).addTo(map);
+  minimizedMarker.bindTooltip("Klicka för att öppna", { direction: 'top', offset: [0, -42] });
+  minimizedMarker.on('click', () => {
+    map.removeLayer(minimizedMarker);
+    minimizedMarker = null;
+    showAllInfo(lat, lng);
+  });
 }
 
 function isLikelyWGS84(coords) {
