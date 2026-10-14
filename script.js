@@ -170,7 +170,22 @@ function addGeoJsonLayers() {
   addGeoJsonLayer(geojsonKommun, "Kommun", { color: "#0d9488", weight: 1.5, fillColor: "green", fillOpacity: 0 });
   addGeoJsonLayer(geojsonLan, "Län", { color: "#2563eb", weight: 1.5, fillColor: "blue", fillOpacity: 0 });
   addGeoJsonLayer(geojsonLandskap, "Landskap", { color: "#000000", weight: 1.5, fillColor: "purple", fillOpacity: 0 });
-  
+
+  const banInfoUrl = 'https://geo-baninfo.trafikverket.se/MapService/wms.axd/BanInfo_1_5?';
+  const banInfoOptions = { format: 'image/png', transparent: true, maxZoom: 21, attribution: '© Trafikverket' };
+
+  const bandelLayer = L.tileLayer.wms(banInfoUrl, { ...banInfoOptions, layers: 'Bandel' });
+  const trafikplatserLayer = L.tileLayer.wms(banInfoUrl, { ...banInfoOptions, layers: 'Trafikplatser' });
+  const kilometertalLayer = L.tileLayer.wms(banInfoUrl, { ...banInfoOptions, layers: 'Kilometertal' });
+
+  overlayMaps["Bandel (järnväg)"] = bandelLayer;
+  overlayMaps["Trafikplatser (järnväg)"] = trafikplatserLayer;
+  overlayMaps["Kilometertal (järnväg)"] = kilometertalLayer;
+
+  layerControl.addOverlay(bandelLayer, "Bandel (järnväg)");
+  layerControl.addOverlay(trafikplatserLayer, "Trafikplatser (järnväg)");
+  layerControl.addOverlay(kilometertalLayer, "Kilometertal (järnväg)");
+
   console.log('✅ All layers added to map');
 }
 
