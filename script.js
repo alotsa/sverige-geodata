@@ -365,7 +365,7 @@ function handleAutocomplete() {
   const resultsContainer = document.getElementById('results');
   const worldwideSearch = document.getElementById('worldwideToggle').checked;
 
-  if (query.length < 3) {
+  if (query.length < 3 || looksLikeCoordinates(query)) {
     resultsContainer.innerHTML = "";
     return;
   }
@@ -476,6 +476,12 @@ function isLikelyDMS(input) {
   return /[°*\'"]/.test(input) || /[NSEWnsew]/.test(input);
 }
 
+function looksLikeCoordinates(str) {
+  if (!/^[\d.,\s +-]+$/.test(str)) return false;
+  const nums = str.match(/[+-]?\d+(?:[.,]\d+)?/g);
+  return nums !== null && nums.length >= 2;
+}
+
 function performSearch() {
   const query = document.getElementById('searchField').value.trim().toLowerCase();
   const worldwideSearch = document.getElementById('worldwideToggle').checked;
@@ -495,7 +501,7 @@ function performSearch() {
     currentMarkersGroup = null;
   }
 
-  const parts = query.split(/[ ,]+/).map(num => parseFloat(num));
+  const parts = query.split(/[\s,]+/).map(num => parseFloat(num));
 
   // Försök DMS/DDM-parsning
   if (isLikelyDMS(query)) {
@@ -528,6 +534,11 @@ function performSearch() {
     showAllInfo(lat, lng);
     document.getElementById('results').innerHTML = "";
   } else {
+    if (looksLikeCoordinates(query)) {
+      alert("Koordinaten kunde inte tolkas. Ange WGS84, RT90 eller SWEREF 99 TM, och använd punkt som decimaltecken.");
+      return;
+    }
+
     const apiURL = worldwideSearch
       ? `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=50`
       : `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=SE&limit=50`;
